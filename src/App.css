@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+.responsive-background {
+  background-size: 300%;
+  background-attachment: scroll;
+}
+
+@media (min-width: 768px) {
+  .responsive-background {
+    background-size: 210%;
+    background-attachment: fixed;
+  }
+}
