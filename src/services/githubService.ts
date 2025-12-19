@@ -85,8 +85,19 @@ export const githubService = {
 
     const fetchedRepos = await Promise.all(reposToFetch);
 
-    // Filter out null values and return
-    return fetchedRepos.filter((repo): repo is FeaturedRepo => repo !== null);
+    // Filter out null values and map to FeaturedRepo (GitHubRepo is compatible since FeaturedRepo is a subset)
+    return fetchedRepos
+      .filter((repo): repo is GitHubRepo => repo !== null)
+      .map((repo): FeaturedRepo => ({
+        id: repo.id,
+        name: repo.name,
+        description: repo.description,
+        html_url: repo.html_url,
+        language: repo.language,
+        stargazers_count: repo.stargazers_count,
+        forks_count: repo.forks_count,
+        updated_at: repo.updated_at,
+      }));
   },
 
   /**
