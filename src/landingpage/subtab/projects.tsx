@@ -1,5 +1,4 @@
 import { useGitHubRepos } from '../../hooks/useGitHubRepos';
-import { formatDate } from '../../utils/dateFormatter';
 
 const Projects = () => {
   const { repos, loading, error } = useGitHubRepos();
