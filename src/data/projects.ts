@@ -71,6 +71,39 @@ export const projectsData: Project[] = [
       stargazers_count: 0,
       forks_count: 0,
       updated_at: ""
+  },
+  {
+      id: 6,
+      name: 'EHCo',
+      description: 'An Audio Compressor using Adaptive Huffman with DCT and RLE Algorithms.',
+      image: '/images/projects/EHCo.png',
+      techStack: ['React', 'TypeScript', 'Tailwind CSS', 'Vercel', 'C++'],
+      html_url: 'https://github.com/Tetsuuya/EHCo_Audio_Compression_System',
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: ""
+  },
+  {
+      id: 7,
+      name: 'CalcMate',
+      description: 'CalcMate* is a Python-based calculator with a graphical user interface (GUI) built using tkinter. It lets users input mathematical functions and perform numerical integration with ease.',
+      image: '/images/projects/CalcMate.png',
+      techStack: ['Python', 'tkinter'],
+      html_url: 'https://github.com/Tetsuuya/CALC-ME',
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: ""
+  },
+  {
+      id: 8,
+      name: 'AUTMATION IN DNA/RNA PATTERN VISUALIZER',
+      description: 'A web application for visualizing DNA and RNA patterns and C++ for model and pattern validation, built with Next.js and fastAPI, deployed on Vercel.',
+      image: '/images/projects/DNA&RNA visualizer.png',
+      techStack: ['Next.js', 'fastAPI', 'Vercel', 'C++'],
+      html_url: '',
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: ""
   }
 ];
 
