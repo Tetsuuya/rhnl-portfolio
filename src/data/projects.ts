@@ -1,0 +1,76 @@
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  image?: string; // Path to project image in /public/images/projects/
+  techStack?: string[];
+  html_url: string;
+  stargazers_count: number;
+  forks_count: number;
+  updated_at: string;
+  featured?: boolean;
+}
+
+export const projectsData: Project[] = [
+  {
+    id: 1,
+    name: 'Kangina',
+    description: 'A full-stack online restaurant platform with a TypeScript frontend, Django backend, Vercel deployment, and Neon database.',
+    image: '/images/projects/Kangina.png',
+    techStack: ['TypeScript', 'Django', 'Vercel', 'Neon'],
+    html_url: 'https://github.com/Tetsuuya/KangIna-Online-Restaurant',
+    stargazers_count: 0,
+    forks_count: 0,
+    updated_at: '2026-05-06T00:00:00Z',
+    featured: true,
+  },
+  {
+    id: 2,
+    name: 'Hi-Lite Studio',
+    description: 'Hi-Lite Studio is a studio web application, developed to manage the studio’s creative portfolio, client bookings, and internal administration. It provides a smooth and efficient experience for both clients and administrators, while prioritizing security and responsiveness.',
+    image: '/images/projects/Hi-Lite Studio.png',
+    techStack: ['React', 'TypeScript', 'Vercel', 'Supabase','Groq api', 'Brevo Api'],
+    html_url: 'https://github.com/Hi-Lite-Studio/Hi-Lite-Studios',
+    stargazers_count: 0,
+    forks_count: 0,
+    updated_at: '2026-05-06T00:00:00Z',
+    featured: true,
+  },
+  {
+    id: 3,
+    name: 'Spark',
+    description: 'A web-based anonymous voice chat platform that connects random strangers in real-time voice conversations. Built with Next.js, TypeScript, FastAPI, and WebRTC.',
+    image: '/images/projects/Spark.png',
+    techStack: ['Next.js', 'TypeScript', 'FastAPI', 'WebRTC'],
+    html_url: 'https://github.com/Tetsuuya/Spark',
+    stargazers_count: 0,
+    forks_count: 0,
+    updated_at: '2026-05-06T00:00:00Z',
+    featured: true,
+  },
+  {
+    id: 4,
+    name: 'Trailguide',
+    description: 'Trail Guide is a conversational assistant for the University of Science and Technology of Southern Philippines. It helps students and staff find answers from the USTP handbook, campus map, and course offerings through a chat-based interface.',
+    image: '/images/projects/Trailguide.png',
+    techStack: ['React', 'Next.js', 'Groq api', 'Vercel', 'Supabase'],
+    html_url: 'https://github.com/Tetsuuya/Trailguide',
+    stargazers_count: 0,
+    forks_count: 0,
+    updated_at: '2026-05-06T00:00:00Z',
+    featured: true,
+
+  },
+  {
+      id: 5,
+      name: 'Nava',
+      description: 'A modern web application notetaking app built with Next.js and Tailwind CSS, deployed on Vercel. It offers a sleek and intuitive interface for users to create, organize, and manage their notes efficiently. ',
+      image: '/images/projects/Nava.png',
+      techStack: ['React','Next.js', 'Tailwind CSS', 'Vercel'],
+      html_url: '',
+      stargazers_count: 0,
+      forks_count: 0,
+      updated_at: ""
+  }
+];
+
