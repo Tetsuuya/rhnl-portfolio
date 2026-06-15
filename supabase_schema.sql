@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   description TEXT,
   image TEXT,
+  image_position TEXT DEFAULT 'center center', -- CSS object-position for focal point
+  repo_url TEXT,                                -- Optional GitHub repo link
   tech_stack TEXT[] DEFAULT '{}'::TEXT[],
   html_url TEXT,
   stargazers_count INTEGER DEFAULT 0,
@@ -14,6 +16,10 @@ CREATE TABLE IF NOT EXISTS projects (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   featured BOOLEAN DEFAULT FALSE
 );
+
+-- If the table already exists, run these to add the new columns:
+-- ALTER TABLE projects ADD COLUMN IF NOT EXISTS image_position TEXT DEFAULT 'center center';
+-- ALTER TABLE projects ADD COLUMN IF NOT EXISTS repo_url TEXT;
 
 -- 2. Create the tech_stack table
 CREATE TABLE IF NOT EXISTS tech_stack (
@@ -114,3 +120,41 @@ CREATE POLICY "Allow authenticated delete on experience"
   TO authenticated
   USING (true);
 
+-- ============================================================
+-- 9. Storage: project-images bucket
+-- ============================================================
+
+-- Create the storage bucket (public so images are accessible via URL)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'project-images',
+  'project-images',
+  true,
+  5242880,  -- 5 MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow anyone to read/view files (public bucket)
+CREATE POLICY "Allow public read on project-images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'project-images');
+
+-- Allow authenticated users to upload new files
+CREATE POLICY "Allow authenticated upload on project-images"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'project-images');
+
+-- Allow authenticated users to update (replace) files
+CREATE POLICY "Allow authenticated update on project-images"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'project-images')
+  WITH CHECK (bucket_id = 'project-images');
+
+-- Allow authenticated users to delete files
+CREATE POLICY "Allow authenticated delete on project-images"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'project-images');

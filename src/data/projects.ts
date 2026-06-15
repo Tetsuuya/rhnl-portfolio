@@ -3,8 +3,10 @@ export interface Project {
   name: string;
   description: string;
   image?: string; // Path to project image in /public/images/projects/
+  image_position?: string; // CSS object-position e.g. "center top", "50% 30%"
   techStack?: string[];
-  html_url: string;
+  html_url: string;       // Live demo URL
+  repo_url?: string;      // GitHub repo URL (optional)
   stargazers_count: number;
   forks_count: number;
   updated_at: string;

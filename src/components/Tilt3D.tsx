@@ -219,6 +219,10 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
 
   // Mouse/Pointer handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Don't intercept clicks on interactive elements (links/buttons)
+    const target = e.target as HTMLElement;
+    const interactiveEl = target.closest('a') || target.closest('button');
+    if (interactiveEl) return;
 
     // Prevent text selection conflicts but allow pointer capture to work perfectly
     e.preventDefault();
@@ -314,9 +318,16 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     if (dragDistance < 6) {
       const target = e.target as HTMLElement;
       // Look for anchor links or buttons inside
-      const interactiveEl = target.closest('a') || target.closest('button');
-      if (interactiveEl) {
-        (interactiveEl as HTMLElement).click();
+      const anchor = target.closest('a') as HTMLAnchorElement | null;
+      const btn = target.closest('button') as HTMLButtonElement | null;
+      if (anchor && anchor.href) {
+        if (anchor.target === '_blank') {
+          window.open(anchor.href, '_blank', 'noopener,noreferrer');
+        } else {
+          window.location.href = anchor.href;
+        }
+      } else if (btn) {
+        btn.click();
       }
     }
 

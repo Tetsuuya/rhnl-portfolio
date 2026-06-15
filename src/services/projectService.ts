@@ -9,8 +9,10 @@ function mapFromDB(dbProj: any): Project {
     name: dbProj.name,
     description: dbProj.description,
     image: dbProj.image || undefined,
+    image_position: dbProj.image_position || 'center center',
     techStack: dbProj.tech_stack || [],
     html_url: dbProj.html_url,
+    repo_url: dbProj.repo_url || undefined,
     stargazers_count: dbProj.stargazers_count ?? 0,
     forks_count: dbProj.forks_count ?? 0,
     updated_at: dbProj.updated_at || new Date().toISOString(),
@@ -24,8 +26,10 @@ function mapToDB(proj: Omit<Project, 'id'> & { id?: number }): any {
     name: proj.name,
     description: proj.description,
     image: proj.image || null,
+    image_position: proj.image_position || 'center center',
     tech_stack: proj.techStack || [],
     html_url: proj.html_url,
+    repo_url: proj.repo_url || null,
     stargazers_count: proj.stargazers_count ?? 0,
     forks_count: proj.forks_count ?? 0,
     updated_at: proj.updated_at || new Date().toISOString(),
@@ -38,6 +42,31 @@ function mapToDB(proj: Omit<Project, 'id'> & { id?: number }): any {
 }
 
 export const projectService = {
+  /**
+   * Uploads an image file to Supabase Storage (bucket: project-images)
+   * and returns the public URL.
+   */
+  async uploadImage(file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const filePath = `projects/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('project-images')
+      .upload(filePath, file, { upsert: false });
+
+    if (uploadError) {
+      throw new Error(`Image upload failed: ${uploadError.message}`);
+    }
+
+    const { data } = supabase.storage
+      .from('project-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  },
+
+
   /**
    * Fetches all projects from Supabase.
    * If there is an error (e.g. database not set up), it falls back to the static local projectsData.
