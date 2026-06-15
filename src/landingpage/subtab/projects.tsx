@@ -26,7 +26,7 @@ const Projects = () => {
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-120px)] w-full py-8 sm:py-12 md:py-16">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8 max-w-7xl">
           <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8 sm:mb-10 md:mb-12 text-center px-4">
             My Projects
           </h2>
@@ -78,7 +78,7 @@ const Projects = () => {
 
   return (
     <div className="min-h-[calc(100vh-120px)] w-full py-8 sm:py-12 md:py-16">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 max-w-7xl">
         <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8 sm:mb-10 md:mb-12 text-center px-4">
           My Projects
         </h2>

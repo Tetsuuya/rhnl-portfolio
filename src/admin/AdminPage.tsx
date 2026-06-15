@@ -589,7 +589,7 @@ const AdminPage = () => {
 
   // Render Dashboard
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative max-w-7xl">
       {/* Toast Alert */}
       {successMessage && (
         <div className="fixed top-24 right-4 z-50 p-4 bg-green-950/80 border-2 border-green-500/80 rounded-xl text-green-200 shadow-2xl backdrop-blur-md animate-fade-in-down">

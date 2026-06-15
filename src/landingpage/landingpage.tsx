@@ -31,18 +31,18 @@ const LandingPage = () => {
   return (
     <>
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16">
-        <div className="flex flex-col lg:flex-row items-center justify-between min-h-[calc(100vh-120px)] gap-8 sm:gap-10 md:gap-12 mb-12 sm:mb-16">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 pt-2 sm:pt-4 md:pt-6 pb-8 sm:pb-12 md:pb-16 max-w-7xl">
+        <div className="flex flex-col lg:flex-row items-center justify-between min-h-[calc(100vh-200px)] gap-8 sm:gap-10 lg:gap-24 xl:gap-32 mb-12 sm:mb-16">
           {/* Left Content Area */}
           <Tilt3D className="flex-1 max-w-2xl text-center lg:text-left w-full">
             <div className="preserve-3d">
               <p className="text-white text-base sm:text-lg md:text-xl mb-3 sm:mb-4 transition-all duration-300 hover:translate-y-[-8px] hover:translate-x-2 hover:shadow-[0_10px_30px_rgba(255,255,255,0.4)] hover:scale-105 cursor-default translate-z-10">Hi, I'm Rhenel,</p>
-              <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-9xl font-bold mb-4 sm:mb-6 leading-tight transition-all duration-300 hover:translate-y-[-10px] hover:translate-x-2 hover:shadow-[0_15px_40px_rgba(255,255,255,0.5)] hover:scale-[1.02] cursor-default translate-z-30">
-                <span className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl whitespace-nowrap">I'M A FULL-STACK</span>
+              <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight transition-all duration-300 hover:translate-y-[-10px] hover:translate-x-2 hover:shadow-[0_15px_40px_rgba(255,255,255,0.5)] hover:scale-[1.02] cursor-default translate-z-30">
+                <span className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl whitespace-nowrap">I'M A FULL-STACK</span>
                 <br />
-                <span className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">DEVELOPER</span>
+                <span className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">DEVELOPER</span>
               </h1>
-              <p className="text-white text-sm sm:text-base md:text-lg mb-6 sm:mb-8 leading-relaxed transition-all duration-300 hover:translate-y-[-8px] hover:translate-x-2 hover:shadow-[0_10px_30px_rgba(255,255,255,0.4)] hover:scale-105 cursor-default px-2 sm:px-0 translate-z-20">
+              <p className="text-gray-300 text-xs sm:text-sm md:text-sm mb-6 sm:mb-8 leading-relaxed max-w-lg transition-all duration-300 hover:translate-y-[-8px] hover:translate-x-2 hover:shadow-[0_10px_30px_rgba(255,255,255,0.4)] hover:scale-105 cursor-default px-2 sm:px-0 translate-z-20 line-clamp-3">
                 I specialize in building modern, scalable web applications with a focus on clean code, great user experiences, and robust backend solutions. Passionate about turning ideas into reality through technology.
               </p>
               <a 
@@ -59,7 +59,7 @@ const LandingPage = () => {
           {/* Right Content Area - Profile Picture */}
           <Tilt3D className="flex-1 flex justify-center items-center w-full">
             <div className="flex flex-col items-center preserve-3d">
-              <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[380px] lg:h-[380px] xl:w-[460px] xl:h-[460px] rounded-full border-2 border-white mb-4 sm:mb-6 overflow-visible relative flex items-center justify-center transition-all duration-300 hover:shadow-[0_15px_50px_rgba(255,255,255,0.6)] hover:border-white/80 hover:scale-110 hover:translate-y-[-10px] translate-z-30">
+              <div className="w-44 h-44 sm:w-56 sm:h-56 md:w-72 md:h-72 lg:w-[320px] lg:h-[320px] xl:w-[390px] xl:h-[390px] rounded-full border-2 border-white mb-4 sm:mb-6 overflow-visible relative flex items-center justify-center transition-all duration-300 hover:shadow-[0_15px_50px_rgba(255,255,255,0.6)] hover:border-white/80 hover:scale-110 hover:translate-y-[-10px] translate-z-30">
                 <img 
                   src={profilePicture} 
                   alt="Rhenel" 
