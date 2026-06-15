@@ -59,7 +59,7 @@ const LandingPage = () => {
           {/* Right Content Area - Profile Picture */}
           <Tilt3D className="flex-1 flex justify-center items-center w-full">
             <div className="flex flex-col items-center preserve-3d">
-              <div className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[450px] lg:h-[450px] xl:w-[550px] xl:h-[550px] rounded-full border-2 border-white mb-4 sm:mb-6 overflow-visible relative flex items-center justify-center transition-all duration-300 hover:shadow-[0_15px_50px_rgba(255,255,255,0.6)] hover:border-white/80 hover:scale-110 hover:translate-y-[-10px] translate-z-30">
+              <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[380px] lg:h-[380px] xl:w-[460px] xl:h-[460px] rounded-full border-2 border-white mb-4 sm:mb-6 overflow-visible relative flex items-center justify-center transition-all duration-300 hover:shadow-[0_15px_50px_rgba(255,255,255,0.6)] hover:border-white/80 hover:scale-110 hover:translate-y-[-10px] translate-z-30">
                 <img 
                   src={profilePicture} 
                   alt="Rhenel" 
