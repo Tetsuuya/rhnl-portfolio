@@ -186,39 +186,42 @@ export const ElasticBackground: React.FC = () => {
 
       // --- 1. SNAKE PHYSICS LOGIC ---
       if (segments.length > 0) {
+        const isMobile = width < 768;
+        const snakeScale = isMobile ? 0.6 : 1.0;
+
         // Read current section hash
         const hash = window.location.hash.slice(1) || 'home';
 
         // Settings based on current section
-        let speed = 2.4;
+        let speed = 2.4 * snakeScale;
         let slitherFreq = 0.07;
-        let slitherAmp = 9.0;
-        let targetProximity = 45;
+        let slitherAmp = 9.0 * snakeScale;
+        let targetProximity = 45 * snakeScale;
 
         const cursorDist = Math.sqrt((segments[0].x - mouse.x) ** 2 + (segments[0].y - mouse.y) ** 2);
 
         if (hash === 'projects') {
-          speed = 4.2;
+          speed = 4.2 * snakeScale;
           slitherFreq = 0.12;
-          slitherAmp = 15.0;
-          targetProximity = 60;
+          slitherAmp = 15.0 * snakeScale;
+          targetProximity = 60 * snakeScale;
         } else if (hash === 'about') {
-          speed = 1.4;
+          speed = 1.4 * snakeScale;
           slitherFreq = 0.045;
-          slitherAmp = 5.0;
+          slitherAmp = 5.0 * snakeScale;
           // Curious behavior: follow the mouse cursor
           if (mouse.x > -500 && cursorDist < 450) {
             sTarget.x = mouse.x;
             sTarget.y = mouse.y;
           }
         } else if (hash === 'experience') {
-          speed = 2.65;
+          speed = 2.65 * snakeScale;
           slitherFreq = 0.085;
-          slitherAmp = 10.0;
+          slitherAmp = 10.0 * snakeScale;
         } else if (hash === 'contacts') {
-          speed = 1.25;
+          speed = 1.25 * snakeScale;
           slitherFreq = 0.055;
-          slitherAmp = 6.0;
+          slitherAmp = 6.0 * snakeScale;
         }
 
         // Handle cinematic intro movement (Phase 0: Reveal from Left)
@@ -338,9 +341,9 @@ export const ElasticBackground: React.FC = () => {
 
         // In intro phase 0 and 1, we want the snake to move faster to slither in/out nicely
         const inIntro = (introPhase === 0 || introPhase === 1);
-        const currentSpeed = inIntro ? 15.5 : speed;
+        const currentSpeed = inIntro ? 15.5 * snakeScale : speed;
         const currentSlitherFreq = inIntro ? 0.095 : slitherFreq;
-        const currentSlitherAmp = inIntro ? 18.0 : slitherAmp;
+        const currentSlitherAmp = inIntro ? 18.0 * snakeScale : slitherAmp;
 
         // Add perpendicular slither waves to head
         const slitherVal = Math.sin(frameCountRef.current * currentSlitherFreq) * currentSlitherAmp;
@@ -356,7 +359,7 @@ export const ElasticBackground: React.FC = () => {
         }
 
         // Body Segments Spring Follow (Rubbery stretch dynamics)
-        const segmentSpacing = 18.4; // tighter spacing for smooth python body curvature
+        const segmentSpacing = 18.4 * snakeScale; // tighter spacing for smooth python body curvature
         for (let i = 1; i < segments.length; i++) {
           const prev = segments[i - 1];
           const curr = segments[i];
@@ -382,7 +385,7 @@ export const ElasticBackground: React.FC = () => {
 
         // Elastic grid sheet deformation beneath snake segments (converted to document coordinates)
         // Grid-indexed spatial lookup: O(~25 cells) instead of O(n) full node scan
-        const deformingRadius = 110;
+        const deformingRadius = 110 * snakeScale;
         segments.forEach((seg, sIdx) => {
           if (sIdx % 2 !== 0) return; // limit grid physics pokes to improve performance
           const segDocX = seg.x + scrollX;
@@ -416,7 +419,7 @@ export const ElasticBackground: React.FC = () => {
           const dy = (targetFood as FoodItem).y - headDocY;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 38) {
+          if (dist < 38 * snakeScale) {
             const eatenId = (targetFood as FoodItem).id;
             const eatenX = (targetFood as FoodItem).x;
             const eatenY = (targetFood as FoodItem).y;
@@ -679,25 +682,28 @@ export const ElasticBackground: React.FC = () => {
 
       // --- 4. DRAW BIG REAL SNAKE ---
       if (segments.length > 0) {
+        const isMobile = width < 768;
+        const snakeScale = isMobile ? 0.6 : 1.0;
+
         // Flicking red fork-tongue logic
         const tongueCycle = frameCountRef.current % 110;
         if (tongueCycle > 85) {
-          const tongueLen = 34 + Math.sin(frameCountRef.current * 0.8) * 9.0; // flickering motion
-          const startX = segments[0].x + Math.cos(snakeAngle.current) * 23.0;
-          const startY = segments[0].y + Math.sin(snakeAngle.current) * 23.0;
+          const tongueLen = (34 + Math.sin(frameCountRef.current * 0.8) * 9.0) * snakeScale; // flickering motion
+          const startX = segments[0].x + Math.cos(snakeAngle.current) * (23.0 * snakeScale);
+          const startY = segments[0].y + Math.sin(snakeAngle.current) * (23.0 * snakeScale);
 
           const midX = startX + Math.cos(snakeAngle.current) * tongueLen;
           const midY = startY + Math.sin(snakeAngle.current) * tongueLen;
 
           const forkAngle = 0.40;
-          const forkLen = 13.0;
+          const forkLen = 13.0 * snakeScale;
           const leftTipX = midX + Math.cos(snakeAngle.current - forkAngle) * forkLen;
           const leftTipY = midY + Math.sin(snakeAngle.current - forkAngle) * forkLen;
           const rightTipX = midX + Math.cos(snakeAngle.current + forkAngle) * forkLen;
           const rightTipY = midY + Math.sin(snakeAngle.current + forkAngle) * forkLen;
 
           ctx.strokeStyle = '#ff2b42'; // bright blood red
-          ctx.lineWidth = 4.0;
+          ctx.lineWidth = 4.0 * snakeScale;
           ctx.beginPath();
           ctx.moveTo(startX, startY);
           ctx.lineTo(midX, midY);
@@ -714,17 +720,17 @@ export const ElasticBackground: React.FC = () => {
           const seg = segments[i];
 
           // Anatomically realistic python width profile: narrow neck, thick body, tapering tail
-          let radius = 26.0; // base thickness
+          let radius = 26.0 * snakeScale; // base thickness
           if (i === 0) {
-            radius = 24.0; // Head handled separately below (drawn as oval snout)
+            radius = 24.0 * snakeScale; // Head handled separately below (drawn as oval snout)
           } else if (i === 1 || i === 2) {
-            radius = 20.0; // Narrower neck
+            radius = 20.0 * snakeScale; // Narrower neck
           } else if (i > 2 && i < 22) {
-            radius = 29.0; // Thick body
+            radius = 29.0 * snakeScale; // Thick body
           } else {
             // Taper tail down from 29.0px to 4.4px
             const tailProgress = (i - 22) / (segments.length - 1 - 22);
-            radius = 29.0 * (1 - tailProgress * 0.85);
+            radius = 29.0 * snakeScale * (1 - tailProgress * 0.85);
           }
 
           // Interpolated snake colors (Cyan glowing head, purple body, pink tail)
@@ -739,7 +745,7 @@ export const ElasticBackground: React.FC = () => {
 
           ctx.fillStyle = bodyColor;
           ctx.strokeStyle = bodyColor;
-          ctx.shadowBlur = i === 0 ? 24 : i < 15 ? 12 : 4;
+          ctx.shadowBlur = i === 0 ? 24 * snakeScale : i < 15 ? 12 * snakeScale : 4 * snakeScale;
           ctx.shadowColor = `rgba(${rc}, ${gc}, ${bc}, 0.55)`;
 
           if (i === 0) {
@@ -748,10 +754,10 @@ export const ElasticBackground: React.FC = () => {
             ctx.translate(seg.x, seg.y);
             ctx.rotate(snakeAngle.current);
             ctx.beginPath();
-            ctx.moveTo(30, 0); // nose
-            ctx.bezierCurveTo(16, -18, -14, -20, -22, -12); // left jaw flaring
-            ctx.bezierCurveTo(-26, 0, -26, 0, -22, 12); // jaw base
-            ctx.bezierCurveTo(-14, 20, 16, 18, 30, 0); // right jaw
+            ctx.moveTo(30 * snakeScale, 0); // nose
+            ctx.bezierCurveTo(16 * snakeScale, -18 * snakeScale, -14 * snakeScale, -20 * snakeScale, -22 * snakeScale, -12 * snakeScale); // left jaw flaring
+            ctx.bezierCurveTo(-26 * snakeScale, 0, -26 * snakeScale, 0, -22 * snakeScale, 12 * snakeScale); // jaw base
+            ctx.bezierCurveTo(-14 * snakeScale, 20 * snakeScale, 16 * snakeScale, 18 * snakeScale, 30 * snakeScale, 0); // right jaw
             ctx.closePath();
             ctx.fill();
             ctx.restore();
@@ -793,8 +799,8 @@ export const ElasticBackground: React.FC = () => {
         // Draw glowing python eyes on the head segment
         const head = segments[0];
         const eyeAngleOffset = 0.38;
-        const eyeDist = 10.4;
-        const eyeRadius = 3.2;
+        const eyeDist = 10.4 * snakeScale;
+        const eyeRadius = 3.2 * snakeScale;
 
         const leftEyeX = head.x + Math.cos(snakeAngle.current - eyeAngleOffset) * eyeDist;
         const leftEyeY = head.y + Math.sin(snakeAngle.current - eyeAngleOffset) * eyeDist;
@@ -810,32 +816,32 @@ export const ElasticBackground: React.FC = () => {
 
         // Slit pupils for extra realistic snake eyes
         const pupilAngleOffset = 0.38;
-        const pupilDist = 11.2;
+        const pupilDist = 11.2 * snakeScale;
         
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2.0;
+        ctx.lineWidth = 2.0 * snakeScale;
         
         // Left eye vertical slit pupil
         ctx.beginPath();
         ctx.moveTo(
-          head.x + Math.cos(snakeAngle.current - pupilAngleOffset) * pupilDist - Math.sin(snakeAngle.current) * 2.4,
-          head.y + Math.sin(snakeAngle.current - pupilAngleOffset) * pupilDist + Math.cos(snakeAngle.current) * 2.4
+          head.x + Math.cos(snakeAngle.current - pupilAngleOffset) * pupilDist - Math.sin(snakeAngle.current) * (2.4 * snakeScale),
+          head.y + Math.sin(snakeAngle.current - pupilAngleOffset) * pupilDist + Math.cos(snakeAngle.current) * (2.4 * snakeScale)
         );
         ctx.lineTo(
-          head.x + Math.cos(snakeAngle.current - pupilAngleOffset) * pupilDist + Math.sin(snakeAngle.current) * 2.4,
-          head.y + Math.sin(snakeAngle.current - pupilAngleOffset) * pupilDist - Math.cos(snakeAngle.current) * 2.4
+          head.x + Math.cos(snakeAngle.current - pupilAngleOffset) * pupilDist + Math.sin(snakeAngle.current) * (2.4 * snakeScale),
+          head.y + Math.sin(snakeAngle.current - pupilAngleOffset) * pupilDist - Math.cos(snakeAngle.current) * (2.4 * snakeScale)
         );
         ctx.stroke();
 
         // Right eye vertical slit pupil
         ctx.beginPath();
         ctx.moveTo(
-          head.x + Math.cos(snakeAngle.current + pupilAngleOffset) * pupilDist - Math.sin(snakeAngle.current) * 2.4,
-          head.y + Math.sin(snakeAngle.current + pupilAngleOffset) * pupilDist + Math.cos(snakeAngle.current) * 2.4
+          head.x + Math.cos(snakeAngle.current + pupilAngleOffset) * pupilDist - Math.sin(snakeAngle.current) * (2.4 * snakeScale),
+          head.y + Math.sin(snakeAngle.current + pupilAngleOffset) * pupilDist + Math.cos(snakeAngle.current) * (2.4 * snakeScale)
         );
         ctx.lineTo(
-          head.x + Math.cos(snakeAngle.current + pupilAngleOffset) * pupilDist + Math.sin(snakeAngle.current) * 2.4,
-          head.y + Math.sin(snakeAngle.current + pupilAngleOffset) * pupilDist - Math.cos(snakeAngle.current) * 2.4
+          head.x + Math.cos(snakeAngle.current + pupilAngleOffset) * pupilDist + Math.sin(snakeAngle.current) * (2.4 * snakeScale),
+          head.y + Math.sin(snakeAngle.current + pupilAngleOffset) * pupilDist - Math.cos(snakeAngle.current) * (2.4 * snakeScale)
         );
         ctx.stroke();
       }

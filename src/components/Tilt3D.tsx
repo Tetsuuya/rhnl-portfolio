@@ -432,7 +432,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
         transformStyle: 'preserve-3d',
         position: 'relative',
         cursor: 'grab',
-        touchAction: 'none', // Prevents default dragging behaviors (like scroll on mobile)
+        touchAction: 'pan-y', // Allow vertical scrolling on mobile touch screens
       }}
       className={`transition-shadow duration-300 preserve-3d select-none ${className}`}
     >
