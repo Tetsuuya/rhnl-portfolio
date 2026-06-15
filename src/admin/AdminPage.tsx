@@ -73,7 +73,7 @@ const AdminPage = () => {
     checkSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         if (session) {
           setIsAuthenticated(true);
           setAuthMethod('supabase');
