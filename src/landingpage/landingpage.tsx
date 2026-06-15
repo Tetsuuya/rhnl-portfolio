@@ -1,8 +1,12 @@
 import profilePicture from '../assets/profilepicutre.png';
 import { useFeaturedRepos } from '../hooks/useFeaturedRepos';
+import { useTechStack } from '../hooks/useTechStack';
+import { useExperience } from '../hooks/useExperience';
 
 const LandingPage = () => {
   const { featuredRepos, loading } = useFeaturedRepos();
+  const { techItems, loading: techLoading } = useTechStack();
+  const { experienceItems, loading: expLoading } = useExperience();
 
   const renderTechStack = (techStack?: string[]) => {
     if (!techStack || techStack.length === 0) {
@@ -142,55 +146,117 @@ const LandingPage = () => {
           )}
         </div>
 
-        {/* Specialized Skills Section */}
+        {/* Tech Stack & Tools Section */}
         <div className="mt-12 sm:mt-16 md:mt-24 mb-12 sm:mb-16">
           <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 text-center px-4">
-            Specialized Skills
+            Tech Stack & Tools
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-center mb-8 sm:mb-10 md:mb-12 text-gray-300 px-4">
-            I specialize in backend development and database management
+            The languages, frameworks, databases, and tools I use to bring ideas to life.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-7 md:gap-8">
-            {/* Backend Skills */}
-            <div className="bg-black/40 border-2 border-white/20 rounded-lg p-4 sm:p-5 md:p-6 backdrop-blur-sm transition-all duration-300 hover:border-pink-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.6)] hover:translate-y-[-8px] hover:scale-105">
-              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-5 md:mb-6 text-pink-300">
-                Backend
-              </h3>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  Django
-                </span>
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  Flask
-                </span>
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  FastAPI
-                </span>
-              </div>
+          {techLoading ? (
+            <div className="flex flex-col items-center py-12 gap-4">
+              <div className="w-10 h-10 border-4 border-transparent border-t-pink-400 border-pink-400/20 rounded-full animate-spin"></div>
+              <p className="text-gray-400 text-sm">Loading tech stack...</p>
             </div>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-6">
+              {/* Render Categories */}
+              {['Language', 'Framework', 'Database', 'Design', 'Tool'].map((category) => {
+                const items = techItems.filter((t) => t.category === category);
+                if (items.length === 0) return null;
+                
+                return (
+                  <div 
+                    key={category}
+                    className="bg-black/40 border-2 border-white/20 rounded-xl p-5 backdrop-blur-sm transition-all duration-300 hover:border-pink-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.3)] hover:translate-y-[-6px] hover:scale-[1.02] flex flex-col w-full sm:w-[calc(50%-12px)] md:w-[calc(33.33%-16px)] xl:w-[calc(20%-20px)] min-w-[220px] max-w-[280px]"
+                  >
+                    <h3 className="text-lg font-bold mb-4 text-pink-300 border-b border-white/10 pb-2">
+                      {category === 'Language' ? 'Languages' : 
+                       category === 'Framework' ? 'Frameworks' : 
+                       category === 'Database' ? 'Databases' : 
+                       category === 'Tool' ? 'Tools' : category}
+                    </h3>
+                    <div className="flex flex-col gap-3 flex-grow">
+                      {items.map((tech) => (
+                        <div 
+                          key={tech.id} 
+                          className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg p-2.5 hover:border-pink-300/50 hover:bg-pink-500/5 transition-all duration-300 hover:scale-105 group"
+                        >
+                          <div 
+                            className="w-7 h-7 flex-shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain group-hover:scale-110 transition-transform duration-300 text-white" 
+                            dangerouslySetInnerHTML={{ __html: tech.icon }} 
+                          />
+                          <span className="text-white text-xs sm:text-sm font-semibold group-hover:text-pink-300 transition-colors">
+                            {tech.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-            {/* Database & Backend Services */}
-            <div className="bg-black/40 border-2 border-white/20 rounded-lg p-4 sm:p-5 md:p-6 backdrop-blur-sm transition-all duration-300 hover:border-pink-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.6)] hover:translate-y-[-8px] hover:scale-105">
-              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-5 md:mb-6 text-pink-300">
-                Database & Backend Services
-              </h3>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  Supabase (Auth, Database, Storage)
-                </span>
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  Firebase (Auth, Firestore, Realtime Database)
-                </span>
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  PostgreSQL
-                </span>
-                <span className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs sm:text-sm transition-all duration-300 hover:bg-pink-500/20 hover:border-pink-300 hover:scale-105">
-                  MySQL
-                </span>
-              </div>
+        {/* Work Experience Section - Glimpse */}
+        <div className="mt-12 sm:mt-16 md:mt-24 mb-12 sm:mb-16">
+          <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 text-center px-4">
+            Work Experience
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl text-center mb-10 text-gray-300 px-4">
+            A quick glimpse of my latest professional engagement.
+          </p>
+
+          {expLoading ? (
+            <div className="flex flex-col items-center py-12 gap-4">
+              <div className="w-10 h-10 border-4 border-transparent border-t-pink-400 border-pink-400/20 rounded-full animate-spin"></div>
+              <p className="text-gray-400 text-sm">Loading experience glimpse...</p>
             </div>
-          </div>
+          ) : experienceItems.length === 0 ? (
+            <p className="text-center text-gray-400 py-8">No work experience entries found. Add some in the Admin Portal!</p>
+          ) : (
+            <div className="max-w-2xl mx-auto px-4">
+              {/* Show only the latest item (first index) */}
+              {(() => {
+                const latestExp = experienceItems[0];
+                return (
+                  <div className="bg-black/40 border-2 border-white/20 rounded-xl p-6 sm:p-8 backdrop-blur-sm transition-all duration-300 hover:border-pink-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.5)] hover:translate-y-[-6px] hover:scale-[1.01] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/5 rounded-full blur-2xl group-hover:bg-pink-500/10 transition-all"></div>
+                    
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-white/10 pb-4">
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-pink-300 transition-colors">
+                          {latestExp.role}
+                        </h3>
+                        <h4 className="text-base font-semibold text-cyan-300">
+                          {latestExp.company}
+                        </h4>
+                      </div>
+                      <span className="inline-block px-3 py-1 bg-pink-950/45 border border-pink-700/40 text-xs font-bold text-pink-300 rounded-full">
+                        {latestExp.duration}
+                      </span>
+                    </div>
+                    
+                    <p className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-3 whitespace-pre-wrap">
+                      {latestExp.description}
+                    </p>
+                    
+                    <div className="flex justify-center">
+                      <a 
+                        href="#experience"
+                        className="inline-block text-white text-sm sm:text-base font-semibold px-6 py-2.5 rounded-lg border-2 border-pink-300 bg-black/85 backdrop-blur-sm transition-all duration-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.8)] hover:border-pink-400 hover:translate-y-[-4px] hover:scale-105"
+                      >
+                        View Full Experience Journey
+                      </a>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -198,4 +264,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-

@@ -3,8 +3,10 @@ const Footer = () => {
     <footer className="w-full py-6 sm:py-8 mt-12 sm:mt-14 md:mt-16 border-t border-white/20 bg-black/40 backdrop-blur-sm">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 max-w-7xl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-5 md:gap-6">
-          <div className="text-white text-xs sm:text-sm md:text-base text-center md:text-left">
-            © {new Date().getFullYear()} Rhenel Jhon Sajol. All rights reserved.
+          <div className="text-white text-xs sm:text-sm md:text-base text-center md:text-left flex items-center justify-center md:justify-start gap-2 flex-wrap">
+            <span>© {new Date().getFullYear()} Rhenel Jhon Sajol. All rights reserved.</span>
+            <span className="hidden sm:inline text-white/30">•</span>
+            <a href="#admin" className="text-white/40 hover:text-white transition-colors text-xs font-semibold">Admin Portal</a>
           </div>
           <div className="flex items-center gap-4 sm:gap-5 md:gap-6">
             <a 

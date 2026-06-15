@@ -3,6 +3,8 @@ import LandingPage from './landingpage/landingpage';
 import Projects from './landingpage/subtab/projects';
 import About from './landingpage/subtab/about';
 import Contact from './landingpage/subtab/contact';
+import ExperienceSubtab from './landingpage/subtab/experience';
+import AdminPage from './admin/AdminPage';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
 import backgroundImage from './assets/background.png';
@@ -72,6 +74,7 @@ function App() {
               <a href="#home" className="text-white hover:text-white transition-all duration-300 text-sm md:text-base px-3 py-2 rounded-lg hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] hover:bg-pink-500/10 hover:translate-y-[-6px] hover:scale-105">Home</a>
               <a href="#projects" className="text-white hover:text-white transition-all duration-300 text-sm md:text-base px-3 py-2 rounded-lg hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] hover:bg-pink-500/10 hover:translate-y-[-6px] hover:scale-105">Projects</a>
               <a href="#about" className="text-white hover:text-white transition-all duration-300 text-sm md:text-base px-3 py-2 rounded-lg hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] hover:bg-pink-500/10 hover:translate-y-[-6px] hover:scale-105">About</a>
+              <a href="#experience" className="text-white hover:text-white transition-all duration-300 text-sm md:text-base px-3 py-2 rounded-lg hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] hover:bg-pink-500/10 hover:translate-y-[-6px] hover:scale-105">Experience</a>
               <a href="#contacts" className="text-white hover:text-white transition-all duration-300 text-sm md:text-base px-3 py-2 rounded-lg hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] hover:bg-pink-500/10 hover:translate-y-[-6px] hover:scale-105">Contacts</a>
             </div>
             <div className="flex items-center gap-4">
@@ -172,6 +175,13 @@ function App() {
               About
             </a>
             <a
+              href="#experience"
+              onClick={() => setSidebarOpen(false)}
+              className="text-white text-lg px-4 py-3 rounded-lg hover:bg-pink-500/10 hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] transition-all duration-300 hover:translate-x-2"
+            >
+              Experience
+            </a>
+            <a
               href="#contacts"
               onClick={() => setSidebarOpen(false)}
               className="text-white text-lg px-4 py-3 rounded-lg hover:bg-pink-500/10 hover:shadow-[0_8px_25px_rgba(236,72,153,0.7)] transition-all duration-300 hover:translate-x-2"
@@ -223,8 +233,12 @@ function App() {
             <Projects />
           ) : currentView === 'about' ? (
             <About />
+          ) : currentView === 'experience' ? (
+            <ExperienceSubtab />
           ) : currentView === 'contacts' ? (
             <Contact />
+          ) : currentView === 'admin' ? (
+            <AdminPage />
           ) : (
             <LandingPage />
           )}
