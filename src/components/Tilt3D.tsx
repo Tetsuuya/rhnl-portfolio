@@ -18,6 +18,35 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const physicsIdRef = useRef<number | null>(null);
 
+  // Cached bounds to eliminate layout thrashing from getBoundingClientRect()
+  const rectRef = useRef<{ docLeft: number; docTop: number; width: number; height: number }>({
+    docLeft: 0,
+    docTop: 0,
+    width: 0,
+    height: 0,
+  });
+
+  const updateRectCache = () => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      rectRef.current = {
+        docLeft: rect.left + window.scrollX,
+        docTop: rect.top + window.scrollY,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+  };
+
+  // Update rect on resize/scroll init
+  useEffect(() => {
+    updateRectCache();
+    window.addEventListener('resize', updateRectCache);
+    return () => {
+      window.removeEventListener('resize', updateRectCache);
+    };
+  }, []);
+
   // Interaction State
   const isPressing = useRef(false);
   const pressStartX = useRef(0);
@@ -82,13 +111,12 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
       let extSkewY = 0;
 
       if (!isPressing.current && cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        const cardCenterX = rect.left + rect.width / 2;
-        const cardCenterY = rect.top + rect.height / 2;
-
-        // Convert card center to document coordinates
-        const cardDocX = cardCenterX + window.scrollX;
-        const cardDocY = cardCenterY + window.scrollY;
+        const rect = rectRef.current;
+        if (rect.width === 0) {
+          updateRectCache();
+        }
+        const cardDocX = rect.docLeft + rect.width / 2;
+        const cardDocY = rect.docTop + rect.height / 2;
 
         // Query global grid nodes
         const nodes = (window as any).__gridNodes || [];
@@ -193,16 +221,46 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
       vTransY.current += fTransY;
       currentTransY.current += vTransY.current;
 
-      // Apply Matrix/Transforms
-      if (cardRef.current) {
-        cardRef.current.style.transform = `
-          perspective(${perspective}px)
-          translate3d(${currentTransX.current}px, ${currentTransY.current}px, 0)
-          rotateX(${currentRotX.current}deg)
-          rotateY(${currentRotY.current}deg)
-          skew(${currentSkewX.current}deg, ${currentSkewY.current}deg)
-          scale3d(${currentScaleX.current}, ${currentScaleY.current}, 1)
-        `;
+      // Optimize: Only write styles if the card is not at rest
+      const isAtRest =
+        Math.abs(currentRotX.current) < 0.01 && Math.abs(finalTargetRotX) < 0.01 &&
+        Math.abs(currentRotY.current) < 0.01 && Math.abs(finalTargetRotY) < 0.01 &&
+        Math.abs(currentTransX.current) < 0.05 && Math.abs(finalTargetTransX) < 0.05 &&
+        Math.abs(currentTransY.current) < 0.05 && Math.abs(finalTargetTransY) < 0.05 &&
+        Math.abs(currentSkewX.current) < 0.01 && Math.abs(finalTargetSkewX) < 0.01 &&
+        Math.abs(currentSkewY.current) < 0.01 && Math.abs(finalTargetSkewY) < 0.01 &&
+        Math.abs(currentScaleX.current - 1) < 0.001 && Math.abs(targetScaleX.current - 1) < 0.001 &&
+        Math.abs(currentScaleY.current - 1) < 0.001 && Math.abs(targetScaleY.current - 1) < 0.001;
+
+      if (isAtRest) {
+        currentRotX.current = 0;
+        currentRotY.current = 0;
+        currentTransX.current = 0;
+        currentTransY.current = 0;
+        currentSkewX.current = 0;
+        currentSkewY.current = 0;
+        currentScaleX.current = 1;
+        currentScaleY.current = 1;
+
+        vRotX.current = 0; vRotY.current = 0;
+        vTransX.current = 0; vTransY.current = 0;
+        vSkewX.current = 0; vSkewY.current = 0;
+        vScaleX.current = 0; vScaleY.current = 0;
+
+        if (cardRef.current && cardRef.current.style.transform !== '') {
+          cardRef.current.style.transform = '';
+        }
+      } else {
+        if (cardRef.current) {
+          cardRef.current.style.transform = `
+            perspective(${perspective}px)
+            translate3d(${currentTransX.current}px, ${currentTransY.current}px, 0)
+            rotateX(${currentRotX.current}deg)
+            rotateY(${currentRotY.current}deg)
+            skew(${currentSkewX.current}deg, ${currentSkewY.current}deg)
+            scale3d(${currentScaleX.current}, ${currentScaleY.current}, 1)
+          `;
+        }
       }
 
       physicsIdRef.current = requestAnimationFrame(updatePhysics);
@@ -242,9 +300,14 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     const card = cardRef.current;
     if (!card) return;
 
-    const rect = card.getBoundingClientRect();
+    const rect = rectRef.current;
+    if (rect.width === 0) {
+      updateRectCache();
+    }
     const width = rect.width;
     const height = rect.height;
+    const clientLeft = rect.docLeft - window.scrollX;
+    const clientTop = rect.docTop - window.scrollY;
 
     if (isPressing.current) {
       // Calculate pull vector (displacement)
@@ -273,8 +336,8 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
       }));
     } else {
       // Standard 3D perspective hover tilt
-      const mouseX = (e.clientX - rect.left) / width - 0.5;
-      const mouseY = (e.clientY - rect.top) / height - 0.5;
+      const mouseX = (e.clientX - clientLeft) / width - 0.5;
+      const mouseY = (e.clientY - clientTop) / height - 0.5;
 
       targetRotX.current = -mouseY * maxTilt;
       targetRotY.current = mouseX * maxTilt;
@@ -288,8 +351,8 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
       targetSkewY.current = 0;
 
       // specular glare follows hover
-      const glareX = (e.clientX - rect.left) / width * 100;
-      const glareY = (e.clientY - rect.top) / height * 100;
+      const glareX = (e.clientX - clientLeft) / width * 100;
+      const glareY = (e.clientY - clientTop) / height * 100;
       setGlareStyle((prev) => ({
         ...prev,
         opacity: 0.55,
@@ -350,6 +413,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   return (
     <div
       ref={cardRef}
+      onPointerEnter={updateRectCache}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
