@@ -927,6 +927,9 @@ export const ElasticBackground: React.FC = () => {
 
     // Event Handlers for Pointer Interaction
     const handlePointerDown = (e: PointerEvent) => {
+      // Disable background interaction on mobile touch pointer types
+      if (e.pointerType === 'touch') return;
+
       const target = e.target as HTMLElement;
       
       // If clicking interactive elements, don't drag background or drop food
@@ -986,11 +989,16 @@ export const ElasticBackground: React.FC = () => {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
+      // Disable background hover repulsion updates on touch pointer types
+      if (e.pointerType === 'touch') return;
+
       mouseRef.current.x = e.clientX;
       mouseRef.current.y = e.clientY;
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+
       mouseRef.current.isDown = false;
       if (pinnedNodeRef.current) {
         pinnedNodeRef.current.pinned = false;

@@ -277,6 +277,9 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
 
   // Mouse/Pointer handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Disable tilt/warp interactions on touchscreens to allow normal scrolling and taps
+    if (e.pointerType === 'touch') return;
+
     // Don't intercept clicks on interactive elements (links/buttons)
     const target = e.target as HTMLElement;
     const interactiveEl = target.closest('a') || target.closest('button');
@@ -297,6 +300,9 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Disable tilt/warp interactions on touchscreens
+    if (e.pointerType === 'touch') return;
+
     const card = cardRef.current;
     if (!card) return;
 
@@ -362,6 +368,9 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Disable tilt/warp interactions on touchscreens
+    if (e.pointerType === 'touch') return;
+
     if (!isPressing.current) return;
     isPressing.current = false;
     
