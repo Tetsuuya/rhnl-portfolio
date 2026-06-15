@@ -55,7 +55,7 @@ export const ElasticBackground: React.FC = () => {
   const particlesRef = useRef<Particle[]>([]);
 
   // Grid / Physics Settings
-  const spacing = 75; // grid cell size in px
+  const spacing = 80; // grid cell size in px
   const stiffnessAnchor = 0.022; // return-to-rest force strength
   const stiffnessNeighbor = 0.065; // connection strength between adjacent nodes
   const damping = 0.875; // friction / damping (0.875 creates bouncy wave ripples)
@@ -86,8 +86,7 @@ export const ElasticBackground: React.FC = () => {
       const scrollHeight = Math.max(
         document.documentElement.scrollHeight,
         document.body.scrollHeight,
-        window.innerHeight,
-        6000 // Guarantee deep page scroll coverage
+        window.innerHeight * 2 // Reasonable scroll coverage
       );
       rows = Math.ceil(scrollHeight / spacing) + 2;
 
@@ -111,7 +110,7 @@ export const ElasticBackground: React.FC = () => {
 
       // Initialize big real snake (38 segments for a long python) starting off-screen left
       const segments: SnakeSegment[] = [];
-      const numSegments = 38;
+      const numSegments = 30;
       const startX = -350;
       const startY = height / 2;
       for (let i = 0; i < numSegments; i++) {
@@ -135,17 +134,28 @@ export const ElasticBackground: React.FC = () => {
     initGrid();
 
     // Trigger a shockwave poke
+    // Grid-indexed poke: O(radius²/spacing²) instead of O(n) full scan
     const triggerPoke = (px: number, py: number, force: number) => {
-      nodesRef.current.forEach((node) => {
-        const dx = node.x - px;
-        const dy = node.y - py;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-        if (dist < 240) {
-          const push = (240 - dist) * (force / 240);
-          node.vx += (dx / dist) * push;
-          node.vy += (dy / dist) * push;
+      const R = 240;
+      const nodes = nodesRef.current;
+      const minC = Math.max(0, Math.floor((px - R) / spacing));
+      const maxC = Math.min(cols - 1, Math.ceil((px + R) / spacing));
+      const minPR = Math.max(0, Math.floor((py - R) / spacing));
+      const maxPR = Math.min(rows - 1, Math.ceil((py + R) / spacing));
+      for (let pr = minPR; pr <= maxPR; pr++) {
+        for (let pc = minC; pc <= maxC; pc++) {
+          const node = nodes[pr * cols + pc];
+          if (!node) continue;
+          const dx = node.x - px;
+          const dy = node.y - py;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+          if (dist < R) {
+            const push = (R - dist) * (force / R);
+            node.vx += (dx / dist) * push;
+            node.vy += (dy / dist) * push;
+          }
         }
-      });
+      }
     };
 
     // Physics Update and Render Loop
@@ -163,7 +173,8 @@ export const ElasticBackground: React.FC = () => {
       const mouseDocY = mouse.y + scrollY;
 
       // Expose mouse, snake, and grid data globally for card component deformations (Tilt3D)
-      if (typeof window !== 'undefined') {
+      // Throttled to every 3 frames to reduce object allocation churn
+      if (typeof window !== 'undefined' && frameCountRef.current % 3 === 0) {
         (window as any).__mouseData = {
           x: mouse.x,
           y: mouse.y,
@@ -217,12 +228,14 @@ export const ElasticBackground: React.FC = () => {
           sTarget.x = introX;
           sTarget.y = targetY;
 
-          // Dispatch current head coordinate to trigger clip-path reveal
-          window.dispatchEvent(
-            new CustomEvent('snake-intro', {
-              detail: { x: segments[0].x, active: true },
-            })
-          );
+          // Dispatch current head coordinate to trigger clip-path reveal (throttled to every 2 frames)
+          if (frameCountRef.current % 2 === 0) {
+            window.dispatchEvent(
+              new CustomEvent('snake-intro', {
+                detail: { x: segments[0].x, active: true },
+              })
+            );
+          }
 
           // Transition to Phase 1 once tail exits off-screen right
           const tail = segments[segments.length - 1];
@@ -368,21 +381,30 @@ export const ElasticBackground: React.FC = () => {
         }
 
         // Elastic grid sheet deformation beneath snake segments (converted to document coordinates)
+        // Grid-indexed spatial lookup: O(~25 cells) instead of O(n) full node scan
+        const deformingRadius = 110;
         segments.forEach((seg, sIdx) => {
           if (sIdx % 2 !== 0) return; // limit grid physics pokes to improve performance
           const segDocX = seg.x + scrollX;
           const segDocY = seg.y + scrollY;
-          const deformingRadius = 110;
-          nodes.forEach((node) => {
-            const ndx = node.x - segDocX;
-            const ndy = node.y - segDocY;
-            const ndist = Math.sqrt(ndx * ndx + ndy * ndy) || 0.001;
-            if (ndist < deformingRadius) {
-              const pushForce = (deformingRadius - ndist) * 0.045; // stronger deforming poke since snake is bigger
-              node.vx += (ndx / ndist) * pushForce;
-              node.vy += (ndy / ndist) * pushForce;
+          const minC = Math.max(0, Math.floor((segDocX - deformingRadius) / spacing));
+          const maxC = Math.min(cols - 1, Math.ceil((segDocX + deformingRadius) / spacing));
+          const minNR = Math.max(0, Math.floor((segDocY - deformingRadius) / spacing));
+          const maxNR = Math.min(rows - 1, Math.ceil((segDocY + deformingRadius) / spacing));
+          for (let nr = minNR; nr <= maxNR; nr++) {
+            for (let nc = minC; nc <= maxC; nc++) {
+              const node = nodes[nr * cols + nc];
+              if (!node) continue;
+              const ndx = node.x - segDocX;
+              const ndy = node.y - segDocY;
+              const ndist = Math.sqrt(ndx * ndx + ndy * ndy) || 0.001;
+              if (ndist < deformingRadius) {
+                const pushForce = (deformingRadius - ndist) * 0.045;
+                node.vx += (ndx / ndist) * pushForce;
+                node.vy += (ndy / ndist) * pushForce;
+              }
             }
-          });
+          }
         });
 
         // Eating logic
@@ -439,7 +461,28 @@ export const ElasticBackground: React.FC = () => {
       }
 
       // --- 2. GRID SPRING PHYSICS UPDATE ---
-      for (let r = 0; r < rows; r++) {
+      // Viewport-culled: only run full physics on nodes in the visible area + buffer.
+      // Off-screen nodes are snapped to rest so they don't accumulate displacement.
+      const physBuffer = spacing * 3;
+      const physMinRow = Math.max(0, Math.floor((scrollY - physBuffer) / spacing));
+      const physMaxRow = Math.min(rows - 1, Math.ceil((scrollY + height + physBuffer) / spacing));
+      const hoverActive = mouse.x > -500;
+
+      // Snap off-screen rows to rest (prevents displaced grid on scroll)
+      for (let r = 0; r < physMinRow; r++) {
+        for (let c = 0; c < cols; c++) {
+          const node = nodes[r * cols + c];
+          if (node) { node.x = node.ox; node.y = node.oy; node.vx = 0; node.vy = 0; }
+        }
+      }
+      for (let r = physMaxRow + 1; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const node = nodes[r * cols + c];
+          if (node) { node.x = node.ox; node.y = node.oy; node.vx = 0; node.vy = 0; }
+        }
+      }
+
+      for (let r = physMinRow; r <= physMaxRow; r++) {
         for (let c = 0; c < cols; c++) {
           const idx = r * cols + c;
           const node = nodes[idx];
@@ -498,15 +541,17 @@ export const ElasticBackground: React.FC = () => {
             ay += (dy / dist) * force;
           }
 
-          // Hover repulsion: Subtle cursor push (converted to document coordinates)
-          if (mouse.x > -500) {
+          // Hover repulsion: bbox pre-check skips sqrt for distant nodes
+          if (hoverActive) {
             const dx = node.x - mouseDocX;
             const dy = node.y - mouseDocY;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-            if (dist < hoverRadius) {
-              const push = (hoverRadius - dist) * hoverForce;
-              ax += (dx / dist) * push;
-              ay += (dy / dist) * push;
+            if (Math.abs(dx) < hoverRadius && Math.abs(dy) < hoverRadius) {
+              const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+              if (dist < hoverRadius) {
+                const push = (hoverRadius - dist) * hoverForce;
+                ax += (dx / dist) * push;
+                ay += (dy / dist) * push;
+              }
             }
           }
 

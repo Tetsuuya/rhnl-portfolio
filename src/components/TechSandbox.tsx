@@ -43,7 +43,6 @@ export const TechSandbox = () => {
     if (techItems.length > 0 && containerRef.current && !hasInitialized) {
       const container = containerRef.current;
       const width = container.clientWidth || 800;
-      const height = container.clientHeight || 450;
 
       const initialBodies = techItems.map((item, idx) => {
         const w = 125;
@@ -271,7 +270,6 @@ export const TechSandbox = () => {
     if (!container) return;
 
     const width = container.clientWidth || 800;
-    const height = container.clientHeight || 450;
 
     bodiesRef.current.forEach((body, idx) => {
       body.x = Math.random() * (width - body.w);

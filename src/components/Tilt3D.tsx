@@ -219,7 +219,6 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
 
   // Mouse/Pointer handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
 
     // Prevent text selection conflicts but allow pointer capture to work perfectly
     e.preventDefault();
