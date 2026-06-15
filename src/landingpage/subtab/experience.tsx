@@ -1,4 +1,5 @@
 import { useExperience } from '../../hooks/useExperience';
+import Tilt3D from '../../components/Tilt3D';
 
 const ExperienceSubtab = () => {
   const { experienceItems, loading } = useExperience();
@@ -39,20 +40,22 @@ const ExperienceSubtab = () => {
 
                     {/* Card Content wrapper */}
                     <div className="w-full sm:w-[calc(50%-2rem)] ml-12 sm:ml-0">
-                      <div className="bg-black/40 border-2 border-white/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-pink-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.6)] hover:translate-y-[-6px] hover:scale-[1.02]">
-                        <span className="inline-block px-3 py-1 bg-pink-950/45 border border-pink-700/40 text-[11px] font-bold text-pink-300 rounded-full mb-3">
-                          {exp.duration}
-                        </span>
-                        <h3 className="text-xl font-bold text-white mb-1">
-                          {exp.role}
-                        </h3>
-                        <h4 className="text-sm font-semibold text-cyan-300 mb-4">
-                          {exp.company}
-                        </h4>
-                        <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                          {exp.description}
-                        </p>
-                      </div>
+                      <Tilt3D className="rounded-xl">
+                        <div className="bg-black/40 border-2 border-white/20 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-pink-300/70 preserve-3d">
+                          <span className="inline-block px-3 py-1 bg-pink-950/45 border border-pink-700/40 text-[11px] font-bold text-pink-300 rounded-full mb-3 translate-z-10">
+                            {exp.duration}
+                          </span>
+                          <h3 className="text-xl font-bold text-white mb-1 translate-z-30">
+                            {exp.role}
+                          </h3>
+                          <h4 className="text-sm font-semibold text-cyan-300 mb-4 translate-z-20">
+                            {exp.company}
+                          </h4>
+                          <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap translate-z-10">
+                            {exp.description}
+                          </p>
+                        </div>
+                      </Tilt3D>
                     </div>
                   </div>
                 );
@@ -66,3 +69,4 @@ const ExperienceSubtab = () => {
 };
 
 export default ExperienceSubtab;
+

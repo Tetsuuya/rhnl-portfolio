@@ -7,12 +7,36 @@ import ExperienceSubtab from './landingpage/subtab/experience';
 import AdminPage from './admin/AdminPage';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
-import backgroundImage from './assets/background.png';
+import ElasticBackground from './components/ElasticBackground';
 import './App.css';
 
 function App() {
   const [currentView, setCurrentView] = useState<string>('home');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [introX, setIntroX] = useState<number>(0);
+  const [introActive, setIntroActive] = useState<boolean>(true);
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  // Subscribe to snake intro position custom events
+  useEffect(() => {
+    const handleIntro = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setIntroX(customEvent.detail.x);
+      setIntroActive(customEvent.detail.active);
+    };
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('snake-intro', handleIntro);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('snake-intro', handleIntro);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -52,16 +76,22 @@ function App() {
   }, [sidebarOpen]);
 
   return (
-    <div 
-      className="min-h-screen w-full relative bg-black responsive-background"
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundPosition: '55% 50%',
-        backgroundRepeat: 'no-repeat',
-        animation: 'backgroundMove 20s ease-in-out infinite'
-      }}
-    >
-      {/* Navigation Bar - Desktop */}
+    <div className="min-h-screen w-full relative text-white overflow-x-hidden">
+      {/* Dynamic Elastic Rubber Sheet Background */}
+      <ElasticBackground />
+
+      {/* Page Content Wrapper (unfolds in the wake of the slithering snake) */}
+      <div
+        style={{
+          clipPath: introActive ? `inset(0 ${Math.max(0, windowWidth - introX)}px 0 0)` : 'none',
+          width: '100%',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}
+      >
+        {/* Navigation Bar - Desktop */}
       <nav className="w-full py-4 sm:py-6 fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm hidden md:block">
         <div className="container mx-auto px-4 sm:px-6 md:px-8 flex flex-row items-center justify-between max-w-7xl">
           <div className="flex-1 max-w-2xl">
@@ -246,11 +276,22 @@ function App() {
         <Footer />
       </div>
       
-      {/* Chatbot */}
-      <Chatbot />
+        {/* Snake Interactive Food Hint Banner */}
+        <div className="fixed bottom-6 left-6 z-40 max-w-xs bg-black/60 backdrop-blur-md border border-pink-500/30 rounded-xl p-3 shadow-lg pointer-events-none hidden sm:block">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">👍</span>
+            <div>
+              <p className="text-xs text-pink-300 font-bold uppercase tracking-wider">Interactive Grid</p>
+              <p className="text-[11px] text-gray-300">Click empty grid space to feed the Python a Like!</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Chatbot */}
+        <Chatbot />
+      </div>
     </div>
   );
 }
 
 export default App;
-
