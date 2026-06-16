@@ -3,6 +3,7 @@ import { supabase } from '../services/supabaseClient';
 import { projectService } from '../services/projectService';
 import { techStackService } from '../services/techStackService';
 import { experienceService } from '../services/experienceService';
+import { generateResumePDF } from '../services/resumeService';
 import type { Project } from '../data/projects';
 import type { TechItem, CategoryType as TechCategoryType } from '../data/techStack';
 import type { Experience } from '../data/experience';
@@ -234,6 +235,26 @@ const AdminPage = () => {
       showToast('Experience seeded successfully!');
     } catch (err: any) {
       setError(err.message || 'Experience seeding failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Export Resume PDF handler
+  const handleExportResume = async () => {
+    try {
+      setLoading(true);
+      showToast('Generating resume PDF...');
+      
+      await generateResumePDF({
+        projects,
+        techStack: techItems,
+        experience: experienceItems
+      });
+      
+      showToast('Resume PDF exported successfully!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to export resume');
     } finally {
       setLoading(false);
     }
@@ -662,6 +683,13 @@ const AdminPage = () => {
               </button>
             </>
           )}
+          <button
+            onClick={handleExportResume}
+            disabled={loading}
+            className="px-4 py-2 text-xs sm:text-sm font-semibold text-green-200 border-2 border-green-400/50 hover:border-green-400 bg-green-950/20 hover:bg-green-500/10 rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] disabled:opacity-50"
+          >
+            📄 Export Resume PDF
+          </button>
           <button
             onClick={handleLogout}
             className="px-4 py-2 text-xs sm:text-sm font-semibold text-gray-400 hover:text-white border-2 border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 rounded-lg transition-all duration-300"
