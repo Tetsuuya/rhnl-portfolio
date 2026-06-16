@@ -265,172 +265,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     targetScaleX.current = scale * 0.96;
     targetScaleY.current = scale * 0.96;
 
-    // Restart animation loop
-    startAnimationLoop();
-
     e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const startAnimationLoop = () => {
-    if (!isAnimating.current && !physicsIdRef.current) {
-      isAnimating.current = true;
-      const updatePhysics = () => {
-        // Calculate external grid/snake deformation forces by querying the closest background node
-        let extTransX = 0;
-        let extTransY = 0;
-        let extRotX = 0;
-        let extRotY = 0;
-        let extSkewX = 0;
-        let extSkewY = 0;
-
-        if (!isPressing.current && cardRef.current) {
-          const rect = rectRef.current;
-          if (rect.width === 0) {
-            updateRectCache();
-          }
-          const cardDocX = rect.docLeft + rect.width / 2;
-          const cardDocY = rect.docTop + rect.height / 2;
-
-          // Query global grid nodes
-          const nodes = (window as any).__gridNodes || [];
-          let closestNode: any = null;
-          let minDist = 200;
-
-          for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            const dx = cardDocX - n.ox;
-            const dy = cardDocY - n.oy;
-            if (Math.abs(dx) < 200 && Math.abs(dy) < 200) {
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < minDist) {
-                minDist = dist;
-                closestNode = n;
-              }
-            }
-          }
-
-          if (closestNode) {
-            const dispX = closestNode.x - closestNode.ox;
-            const dispY = closestNode.y - closestNode.oy;
-
-            extTransX = dispX * 1.1;
-            extTransY = dispY * 1.1;
-            extRotY = dispX * 0.45;
-            extRotX = -dispY * 0.45;
-            extSkewX = dispX * 0.08;
-            extSkewY = dispY * 0.08;
-
-            const maxGlobalTrans = 45;
-            const transLen = Math.sqrt(extTransX * extTransX + extTransY * extTransY) || 0.001;
-            if (transLen > maxGlobalTrans) {
-              extTransX = (extTransX / transLen) * maxGlobalTrans;
-              extTransY = (extTransY / transLen) * maxGlobalTrans;
-            }
-
-            const maxGlobalRot = 20;
-            const rotLen = Math.sqrt(extRotX * extRotX + extRotY * extRotY) || 0.001;
-            if (rotLen > maxGlobalRot) {
-              extRotX = (extRotX / rotLen) * maxGlobalRot;
-              extRotY = (extRotY / rotLen) * maxGlobalRot;
-            }
-
-            const maxGlobalSkew = 5;
-            const skewLen = Math.sqrt(extSkewX * extSkewX + extSkewY * extSkewY) || 0.001;
-            if (skewLen > maxGlobalSkew) {
-              extSkewX = (extSkewX / skewLen) * maxGlobalSkew;
-              extSkewY = (extSkewY / skewLen) * maxGlobalSkew;
-            }
-          }
-        }
-
-        const finalTargetRotX = targetRotX.current + extRotX;
-        const finalTargetRotY = targetRotY.current + extRotY;
-        const finalTargetTransX = targetTransX.current + extTransX;
-        const finalTargetTransY = targetTransY.current + extTransY;
-        const finalTargetSkewX = targetSkewX.current + extSkewX;
-        const finalTargetSkewY = targetSkewY.current + extSkewY;
-
-        const fRotX = -stiffness * (currentRotX.current - finalTargetRotX) - (1 - damping) * vRotX.current;
-        vRotX.current += fRotX;
-        currentRotX.current += vRotX.current;
-
-        const fRotY = -stiffness * (currentRotY.current - finalTargetRotY) - (1 - damping) * vRotY.current;
-        vRotY.current += fRotY;
-        currentRotY.current += vRotY.current;
-
-        const fSkewX = -stiffness * (currentSkewX.current - finalTargetSkewX) - (1 - damping) * vSkewX.current;
-        vSkewX.current += fSkewX;
-        currentSkewX.current += vSkewX.current;
-
-        const fSkewY = -stiffness * (currentSkewY.current - finalTargetSkewY) - (1 - damping) * vSkewY.current;
-        vSkewY.current += fSkewY;
-        currentSkewY.current += vSkewY.current;
-
-        const fScaleX = -stiffness * (currentScaleX.current - targetScaleX.current) - (1 - damping) * vScaleX.current;
-        vScaleX.current += fScaleX;
-        currentScaleX.current += vScaleX.current;
-
-        const fScaleY = -stiffness * (currentScaleY.current - targetScaleY.current) - (1 - damping) * vScaleY.current;
-        vScaleY.current += fScaleY;
-        currentScaleY.current += vScaleY.current;
-
-        const fTransX = -stiffness * (currentTransX.current - finalTargetTransX) - (1 - damping) * vTransX.current;
-        vTransX.current += fTransX;
-        currentTransX.current += vTransX.current;
-
-        const fTransY = -stiffness * (currentTransY.current - finalTargetTransY) - (1 - damping) * vTransY.current;
-        vTransY.current += fTransY;
-        currentTransY.current += vTransY.current;
-
-        const isAtRest =
-          Math.abs(currentRotX.current) < 0.01 && Math.abs(finalTargetRotX) < 0.01 &&
-          Math.abs(currentRotY.current) < 0.01 && Math.abs(finalTargetRotY) < 0.01 &&
-          Math.abs(currentTransX.current) < 0.05 && Math.abs(finalTargetTransX) < 0.05 &&
-          Math.abs(currentTransY.current) < 0.05 && Math.abs(finalTargetTransY) < 0.05 &&
-          Math.abs(currentSkewX.current) < 0.01 && Math.abs(finalTargetSkewX) < 0.01 &&
-          Math.abs(currentSkewY.current) < 0.01 && Math.abs(finalTargetSkewY) < 0.01 &&
-          Math.abs(currentScaleX.current - 1) < 0.001 && Math.abs(targetScaleX.current - 1) < 0.001 &&
-          Math.abs(currentScaleY.current - 1) < 0.001 && Math.abs(targetScaleY.current - 1) < 0.001 &&
-          Math.abs(vRotX.current) < 0.001 && Math.abs(vRotY.current) < 0.001 &&
-          Math.abs(vTransX.current) < 0.001 && Math.abs(vTransY.current) < 0.001;
-
-        if (isAtRest) {
-          currentRotX.current = 0;
-          currentRotY.current = 0;
-          currentTransX.current = 0;
-          currentTransY.current = 0;
-          currentSkewX.current = 0;
-          currentSkewY.current = 0;
-          currentScaleX.current = 1;
-          currentScaleY.current = 1;
-
-          vRotX.current = 0; vRotY.current = 0;
-          vTransX.current = 0; vTransY.current = 0;
-          vSkewX.current = 0; vSkewY.current = 0;
-          vScaleX.current = 0; vScaleY.current = 0;
-
-          if (cardRef.current && cardRef.current.style.transform !== '') {
-            cardRef.current.style.transform = '';
-          }
-          
-          isAnimating.current = false;
-          physicsIdRef.current = null;
-        } else {
-          if (cardRef.current) {
-            cardRef.current.style.transform = `
-              perspective(${perspective}px)
-              translate3d(${currentTransX.current}px, ${currentTransY.current}px, 0)
-              rotateX(${currentRotX.current}deg)
-              rotateY(${currentRotY.current}deg)
-              skew(${currentSkewX.current}deg, ${currentSkewY.current}deg)
-              scale3d(${currentScaleX.current}, ${currentScaleY.current}, 1)
-            `;
-          }
-          physicsIdRef.current = requestAnimationFrame(updatePhysics);
-        }
-      };
-      physicsIdRef.current = requestAnimationFrame(updatePhysics);
-    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -448,9 +283,6 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     const height = rect.height;
     const clientLeft = rect.docLeft - window.scrollX;
     const clientTop = rect.docTop - window.scrollY;
-
-    // Restart animation loop if not running
-    startAnimationLoop();
 
     if (isPressing.current) {
       // Calculate pull vector (displacement)
@@ -549,9 +381,6 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     targetScaleY.current = 1.0;
     targetRotX.current = 0;
     targetRotY.current = 0;
-
-    // Restart animation loop to animate back to rest
-    startAnimationLoop();
 
     setGlareStyle((prev) => ({
       ...prev,
