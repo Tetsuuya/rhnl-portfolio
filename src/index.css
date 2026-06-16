@@ -1,3 +1,10 @@
+html {
+  /* Reserve scrollbar gutter at all times — prevents the 17px layout shift
+     when body overflow is restored after the snake intro, which was causing the flicker */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
