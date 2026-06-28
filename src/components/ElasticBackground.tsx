@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useEffect } from 'react';
 
 interface Node {
@@ -182,6 +183,9 @@ export const ElasticBackground: React.FC = () => {
         };
         (window as any).__snakeSegments = segments;
         (window as any).__gridNodes = nodes;
+        (window as any).__gridCols = cols;
+        (window as any).__gridRows = rows;
+        (window as any).__gridSpacing = spacing;
       }
 
       // --- 1. SNAKE PHYSICS LOGIC ---
@@ -583,8 +587,11 @@ export const ElasticBackground: React.FC = () => {
         ctx.fillRect(0, 0, width, height);
       }
 
-      // Draw Grid Lines (deformed sheet connections offset by scroll)
-      ctx.lineWidth = 1.2;
+      // Group tension lines so we can draw them individually.
+      // Batch neutral lines into a single path.
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+      const tensionLines: Array<{x1: number, y1: number, x2: number, y2: number, strokeStyle: string}> = [];
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -608,14 +615,18 @@ export const ElasticBackground: React.FC = () => {
               const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
               const tension = Math.min(Math.abs(dist - spacing) / spacing, 1);
               
-              ctx.strokeStyle = tension > 0.05
-                ? `rgba(236, 72, 153, ${0.18 + tension * 0.35})` // stronger pink glow under stretch
-                : 'rgba(255, 255, 255, 0.14)'; // clearly visible neutral dynamic lines at rest
-              
-              ctx.beginPath();
-              ctx.moveTo(node.x - scrollX, node.y - scrollY);
-              ctx.lineTo(right.x - scrollX, right.y - scrollY);
-              ctx.stroke();
+              if (tension > 0.05) {
+                tensionLines.push({
+                  x1: node.x - scrollX,
+                  y1: node.y - scrollY,
+                  x2: right.x - scrollX,
+                  y2: right.y - scrollY,
+                  strokeStyle: `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
+                });
+              } else {
+                ctx.moveTo(node.x - scrollX, node.y - scrollY);
+                ctx.lineTo(right.x - scrollX, right.y - scrollY);
+              }
             }
           }
 
@@ -628,20 +639,41 @@ export const ElasticBackground: React.FC = () => {
               const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
               const tension = Math.min(Math.abs(dist - spacing) / spacing, 1);
               
-              ctx.strokeStyle = tension > 0.05
-                ? `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
-                : 'rgba(255, 255, 255, 0.14)';
-
-              ctx.beginPath();
-              ctx.moveTo(node.x - scrollX, node.y - scrollY);
-              ctx.lineTo(down.x - scrollX, down.y - scrollY);
-              ctx.stroke();
+              if (tension > 0.05) {
+                tensionLines.push({
+                  x1: node.x - scrollX,
+                  y1: node.y - scrollY,
+                  x2: down.x - scrollX,
+                  y2: down.y - scrollY,
+                  strokeStyle: `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
+                });
+              } else {
+                ctx.moveTo(node.x - scrollX, node.y - scrollY);
+                ctx.lineTo(down.x - scrollX, down.y - scrollY);
+              }
             }
           }
         }
       }
+      // Stroke all neutral connections in one go
+      ctx.stroke();
 
-      // Draw soft node nodes (intersections offset by scroll)
+      // Now draw all tension lines
+      tensionLines.forEach((line) => {
+        ctx.strokeStyle = line.strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.stroke();
+      });
+
+      // Draw soft node dots (intersections offset by scroll)
+      // Batch neutral dots (opacity 0.08) and render custom opacity dots separately.
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+      
+      const customDots: Array<{ x: number; y: number; opacity: number }> = [];
+
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         
@@ -659,20 +691,31 @@ export const ElasticBackground: React.FC = () => {
         
         const distToOrig = Math.sqrt((node.x - node.ox)**2 + (node.y - node.oy)**2);
         
-        let opacity = 0.08; // higher default visibility for intersection dots at rest
-        if (dist < 180) {
-          opacity += ((180 - dist) / 180) * 0.16; // grow close to mouse
+        if (dist < 180 || distToOrig > 2) {
+          let opacity = 0.08;
+          if (dist < 180) {
+            opacity += ((180 - dist) / 180) * 0.16;
+          }
+          if (distToOrig > 2) {
+            opacity += distToOrig * 0.045;
+          }
+          opacity = Math.min(0.24, opacity);
+          customDots.push({ x: screenX, y: screenY, opacity });
+        } else {
+          // Neutral dot: batch path
+          ctx.moveTo(screenX + 1.5, screenY);
+          ctx.arc(screenX, screenY, 1.5, 0, Math.PI * 2);
         }
-        if (distToOrig > 2) {
-          opacity += distToOrig * 0.045; // grow when stretched
-        }
-        
-        opacity = Math.min(0.24, opacity);
-        ctx.fillStyle = `rgba(6, 182, 212, ${opacity})`; // glowing cyan node dots
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, 1.5, 0, Math.PI * 2);
-        ctx.fill();
       }
+      ctx.fill(); // Fill all neutral dots at once
+
+      // Draw custom opacity dots individually
+      customDots.forEach((dot) => {
+        ctx.fillStyle = `rgba(6, 182, 212, ${dot.opacity})`;
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
 
       // Clear foreground canvas (transparent background)
       fgCtx.clearRect(0, 0, width, height);

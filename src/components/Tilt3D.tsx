@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useState, useEffect } from 'react';
 
 interface Tilt3DProps {
@@ -17,6 +18,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const physicsIdRef = useRef<number | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Cached bounds to eliminate layout thrashing from getBoundingClientRect()
   const rectRef = useRef<{ docLeft: number; docTop: number; width: number; height: number }>({
@@ -38,14 +40,34 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     }
   };
 
-  // Update rect on resize/scroll init
+  // Update rect on resize/scroll init and track visibility
   useEffect(() => {
     updateRectCache();
     window.addEventListener('resize', updateRectCache);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.01 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
     return () => {
       window.removeEventListener('resize', updateRectCache);
+      observer.disconnect();
     };
   }, []);
+
+  // Update cache whenever card becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      updateRectCache();
+    }
+  }, [isVisible]);
 
   // Interaction State
   const isPressing = useRef(false);
@@ -102,8 +124,16 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   // Cache the last transform to prevent unnecessary updates
   const lastTransform = useRef('');
 
-  // Start physics loop on mount
+  // Start physics loop on mount and visibility change
   useEffect(() => {
+    if (!isVisible) {
+      if (physicsIdRef.current) {
+        cancelAnimationFrame(physicsIdRef.current);
+        physicsIdRef.current = null;
+      }
+      return;
+    }
+
     const updatePhysics = () => {
       // Calculate external grid/snake deformation forces by querying the closest background node
       let extTransX = 0;
@@ -118,21 +148,52 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
         const cardDocX = rect.docLeft + rect.width / 2;
         const cardDocY = rect.docTop + rect.height / 2;
 
-        // Query global grid nodes
+        // Query global grid nodes and dimensions
         const nodes = (window as any).__gridNodes || [];
+        const cols = (window as any).__gridCols || 0;
+        const rows = (window as any).__gridRows || 0;
+        const spacing = (window as any).__gridSpacing || 80;
+
         let closestNode: any = null;
         let minDist = 200; // Limit node coupling range
 
-        // Search local grid nodes for closest match
-        for (let i = 0; i < nodes.length; i++) {
-          const n = nodes[i];
-          const dx = cardDocX - n.ox;
-          const dy = cardDocY - n.oy;
-          if (Math.abs(dx) < 200 && Math.abs(dy) < 200) {
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < minDist) {
-              minDist = dist;
-              closestNode = n;
+        if (cols > 0 && spacing > 0 && nodes.length > 0) {
+          // Calculate grid index for card center
+          const c = Math.round(cardDocX / spacing);
+          const r = Math.round(cardDocY / spacing);
+          
+          // Search a 3x3 grid neighborhood of coordinates around (c, r)
+          for (let nr = r - 1; nr <= r + 1; nr++) {
+            if (nr < 0 || nr >= rows) continue;
+            for (let nc = c - 1; nc <= c + 1; nc++) {
+              if (nc < 0 || nc >= cols) continue;
+              const idx = nr * cols + nc;
+              const n = nodes[idx];
+              if (n) {
+                const dx = cardDocX - n.ox;
+                const dy = cardDocY - n.oy;
+                if (Math.abs(dx) < 200 && Math.abs(dy) < 200) {
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist < minDist) {
+                    minDist = dist;
+                    closestNode = n;
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          // Fallback to full search if grid metadata is not yet exposed
+          for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            const dx = cardDocX - n.ox;
+            const dy = cardDocY - n.oy;
+            if (Math.abs(dx) < 200 && Math.abs(dy) < 200) {
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < minDist) {
+                minDist = dist;
+                closestNode = n;
+              }
             }
           }
         }
@@ -242,7 +303,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
         cancelAnimationFrame(physicsIdRef.current);
       }
     };
-  }, [perspective]);
+  }, [perspective, isVisible]);
 
   // Mouse/Pointer handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -346,7 +407,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
     // Release pointer capture
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (err) {
+    } catch {
       // Ignore capture release errors if already released
     }
 
