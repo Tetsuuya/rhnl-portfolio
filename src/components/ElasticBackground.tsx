@@ -57,11 +57,11 @@ export const ElasticBackground: React.FC = () => {
 
   // Grid / Physics Settings
   const spacing = 80; // grid cell size in px
-  const stiffnessAnchor = 0.022; // return-to-rest force strength
-  const stiffnessNeighbor = 0.065; // connection strength between adjacent nodes
-  const damping = 0.875; // friction / damping (0.875 creates bouncy wave ripples)
-  const hoverRadius = 160; // radius of hover repulsion
-  const hoverForce = 0.075; // force of hover nudge
+  const stiffnessAnchor = 0.045; // return-to-rest force strength (stiffer)
+  const stiffnessNeighbor = 0.08; // connection strength between adjacent nodes
+  const damping = 0.76; // friction / damping (0.76 dampens bouncy wave ripples quicker)
+  const hoverRadius = 140; // radius of hover repulsion (smaller)
+  const hoverForce = 0.025; // force of hover nudge (subtler)
 
   useEffect(() => {
     const bgCanvas = bgCanvasRef.current;
@@ -389,7 +389,7 @@ export const ElasticBackground: React.FC = () => {
 
         // Elastic grid sheet deformation beneath snake segments (converted to document coordinates)
         // Grid-indexed spatial lookup: O(~25 cells) instead of O(n) full node scan
-        const deformingRadius = 110 * snakeScale;
+        const deformingRadius = 65 * snakeScale;
         segments.forEach((seg, sIdx) => {
           if (sIdx % 2 !== 0) return; // limit grid physics pokes to improve performance
           const segDocX = seg.x + scrollX;
@@ -406,7 +406,7 @@ export const ElasticBackground: React.FC = () => {
               const ndy = node.y - segDocY;
               const ndist = Math.sqrt(ndx * ndx + ndy * ndy) || 0.001;
               if (ndist < deformingRadius) {
-                const pushForce = (deformingRadius - ndist) * 0.045;
+                const pushForce = (deformingRadius - ndist) * 0.015;
                 node.vx += (ndx / ndist) * pushForce;
                 node.vy += (ndy / ndist) * pushForce;
               }
@@ -432,7 +432,7 @@ export const ElasticBackground: React.FC = () => {
             foodsRef.current = foodsRef.current.filter((f) => f.id !== eatenId);
 
             // Poke elastic background at food location
-            triggerPoke(eatenX, eatenY, 95);
+            triggerPoke(eatenX, eatenY, 40);
 
             // Append segment to tail to make snake grow
             const tail = segments[segments.length - 1];
@@ -1020,7 +1020,7 @@ export const ElasticBackground: React.FC = () => {
       }
 
       // Soft indentation impulse at click point (in document coordinates)
-      triggerPoke(clickDocX, clickDocY, 32);
+      triggerPoke(clickDocX, clickDocY, 14);
 
       // Spawn a food item at the clicked document coordinates
       const foodType = Math.random() > 0.5 ? '👍' : '❤️';

@@ -105,8 +105,8 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   const vTransY = useRef(0);
 
   // Physics Config (Spring Settings)
-  const stiffness = 0.075; // spring strength
-  const damping = 0.82; // friction resistance (0.82 = bouncy rubbery rebound)
+  const stiffness = 0.12; // spring strength (stiffer)
+  const damping = 0.65; // friction resistance (lower = higher friction/snappier)
 
   const [glareStyle, setGlareStyle] = useState<React.CSSProperties>({
     position: 'absolute',
@@ -202,17 +202,17 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
           const dispX = closestNode.x - closestNode.ox;
           const dispY = closestNode.y - closestNode.oy;
 
-          // Physically translate card matching grid displacement
-          extTransX = dispX * 1.1;
-          extTransY = dispY * 1.1;
+          // Physically translate card matching grid displacement (subtler)
+          extTransX = dispX * 0.35;
+          extTransY = dispY * 0.35;
 
-          // Rotate card depending on local grid stretch/poke slope
-          extRotY = dispX * 0.45;
-          extRotX = -dispY * 0.45;
+          // Rotate card depending on local grid stretch/poke slope (subtler)
+          extRotY = dispX * 0.12;
+          extRotX = -dispY * 0.12;
 
-          // Skew card to warp along with the elastic background sheet
-          extSkewX = dispX * 0.08;
-          extSkewY = dispY * 0.08;
+          // Skew card to warp along with the elastic background sheet (subtler)
+          extSkewX = dispX * 0.015;
+          extSkewY = dispY * 0.015;
 
           // Apply security caps to ensure extreme inputs don't break page legibility
           const maxGlobalTrans = 45;
