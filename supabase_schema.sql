@@ -89,8 +89,18 @@ CREATE TABLE IF NOT EXISTS experience (
   company TEXT NOT NULL,
   role TEXT NOT NULL,
   duration TEXT NOT NULL,
-  description TEXT
+  description TEXT,
+  location TEXT,
+  job_type TEXT,
+  key_achievements TEXT[] DEFAULT '{}'::TEXT[],
+  tech_stack TEXT[] DEFAULT '{}'::TEXT[]
 );
+
+-- If the table already exists, run these in your Supabase SQL Editor:
+-- ALTER TABLE experience ADD COLUMN IF NOT EXISTS location TEXT;
+-- ALTER TABLE experience ADD COLUMN IF NOT EXISTS job_type TEXT;
+-- ALTER TABLE experience ADD COLUMN IF NOT EXISTS key_achievements TEXT[] DEFAULT '{}'::TEXT[];
+-- ALTER TABLE experience ADD COLUMN IF NOT EXISTS tech_stack TEXT[] DEFAULT '{}'::TEXT[];
 
 -- 7. Enable RLS on experience table
 ALTER TABLE experience ENABLE ROW LEVEL SECURITY;

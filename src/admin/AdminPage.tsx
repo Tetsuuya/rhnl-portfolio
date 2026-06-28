@@ -71,6 +71,10 @@ const AdminPage = () => {
   const [expRole, setExpRole] = useState<string>('');
   const [expDuration, setExpDuration] = useState<string>('');
   const [expDescription, setExpDescription] = useState<string>('');
+  const [expLocation, setExpLocation] = useState<string>('');
+  const [expJobType, setExpJobType] = useState<string>('');
+  const [expAchievementsInput, setExpAchievementsInput] = useState<string>('');
+  const [expTechStackInput, setExpTechStackInput] = useState<string>('');
 
   // Check existing Supabase session on mount and listen to state updates
   useEffect(() => {
@@ -476,6 +480,10 @@ const AdminPage = () => {
     setExpRole('');
     setExpDuration('');
     setExpDescription('');
+    setExpLocation('');
+    setExpJobType('');
+    setExpAchievementsInput('');
+    setExpTechStackInput('');
     setIsExpModalOpen(true);
   };
 
@@ -486,6 +494,10 @@ const AdminPage = () => {
     setExpRole(exp.role);
     setExpDuration(exp.duration);
     setExpDescription(exp.description);
+    setExpLocation(exp.location || '');
+    setExpJobType(exp.job_type || '');
+    setExpAchievementsInput(exp.key_achievements?.join('\n') || '');
+    setExpTechStackInput(exp.tech_stack?.join(', ') || '');
     setIsExpModalOpen(true);
   };
 
@@ -494,11 +506,25 @@ const AdminPage = () => {
     e.preventDefault();
     setError(null);
 
+    const key_achievements = expAchievementsInput
+      .split('\n')
+      .map((a) => a.trim())
+      .filter(Boolean);
+
+    const tech_stack = expTechStackInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
     const expPayload: Omit<Experience, 'id'> = {
       company: expCompany,
       role: expRole,
       duration: expDuration,
       description: expDescription,
+      location: expLocation || null,
+      job_type: expJobType || null,
+      key_achievements,
+      tech_stack,
     };
 
     try {
@@ -1432,17 +1458,45 @@ const AdminPage = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    Duration <span className="text-pink-300">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={expDuration}
+                    onChange={(e) => setExpDuration(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                    placeholder="E.g., Jan 2024 - Present"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={expLocation}
+                    onChange={(e) => setExpLocation(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                    placeholder="E.g., Cagayan de Oro, Philippines (Remote)"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
-                  Duration <span className="text-pink-300">*</span>
+                  Job Type
                 </label>
                 <input
                   type="text"
-                  required
-                  value={expDuration}
-                  onChange={(e) => setExpDuration(e.target.value)}
+                  value={expJobType}
+                  onChange={(e) => setExpJobType(e.target.value)}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
-                  placeholder="E.g., Jan 2024 - Present or Oct 2022 - Dec 2023"
+                  placeholder="E.g., Part-time, Full-time, Contract"
                 />
               </div>
 
@@ -1452,11 +1506,37 @@ const AdminPage = () => {
                 </label>
                 <textarea
                   required
-                  rows={6}
+                  rows={4}
                   value={expDescription}
                   onChange={(e) => setExpDescription(e.target.value)}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
-                  placeholder="Describe your role, key tasks, and accomplishments..."
+                  placeholder="Describe your role and key tasks..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                  Key Achievements (One per line)
+                </label>
+                <textarea
+                  rows={4}
+                  value={expAchievementsInput}
+                  onChange={(e) => setExpAchievementsInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                  placeholder="E.g.&#10;Built real estate platform using Payload CMS.&#10;Delivered full-stack features end-to-end."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                  Tech Stack (Comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={expTechStackInput}
+                  onChange={(e) => setExpTechStackInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                  placeholder="E.g. Next.js, TypeScript, Tailwind CSS, tRPC"
                 />
               </div>
 
