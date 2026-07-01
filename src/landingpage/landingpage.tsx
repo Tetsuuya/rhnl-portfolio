@@ -220,10 +220,20 @@ const LandingPage = () => {
                             key={tech.id} 
                             className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg p-2.5 hover:border-pink-300/50 hover:bg-pink-500/5 transition-all duration-300 hover:scale-105 group"
                           >
-                            <div 
-                              className="w-7 h-7 flex-shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain group-hover:scale-110 transition-transform duration-300 text-white" 
-                              dangerouslySetInnerHTML={{ __html: tech.icon }} 
-                            />
+                            <div className="w-7 h-7 flex-shrink-0 group-hover:scale-110 transition-transform duration-300 text-white flex items-center justify-center">
+                              {tech.icon.trim().toLowerCase().startsWith('<svg') ? (
+                                <div 
+                                  className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain" 
+                                  dangerouslySetInnerHTML={{ __html: tech.icon }} 
+                                />
+                              ) : (
+                                <img 
+                                  src={tech.icon} 
+                                  alt={tech.name} 
+                                  className="w-full h-full object-contain"
+                                />
+                              )}
+                            </div>
                             <span className="text-white text-xs sm:text-sm font-semibold group-hover:text-pink-300 transition-colors">
                               {tech.name}
                             </span>

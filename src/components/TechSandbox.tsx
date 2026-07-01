@@ -319,10 +319,20 @@ export const TechSandbox = () => {
             }}
             className="flex items-center gap-2.5 bg-black/75 border-2 border-white/10 hover:border-pink-400/80 rounded-full px-3 py-1.5 backdrop-blur-md select-none transition-shadow hover:shadow-[0_0_15px_rgba(236,72,153,0.35)] group"
           >
-            <div 
-              className="w-5 h-5 flex-shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain text-white transition-transform group-hover:scale-110" 
-              dangerouslySetInnerHTML={{ __html: body.item.icon }} 
-            />
+            <div className="w-5 h-5 flex-shrink-0 text-white transition-transform group-hover:scale-110 flex items-center justify-center">
+              {body.item.icon.trim().toLowerCase().startsWith('<svg') ? (
+                <div 
+                  className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain" 
+                  dangerouslySetInnerHTML={{ __html: body.item.icon }} 
+                />
+              ) : (
+                <img 
+                  src={body.item.icon} 
+                  alt={body.item.name} 
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
             <span className="text-white text-xs sm:text-[13px] font-bold truncate group-hover:text-pink-300 transition-colors">
               {body.item.name}
             </span>

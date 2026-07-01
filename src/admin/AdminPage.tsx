@@ -412,7 +412,7 @@ const AdminPage = () => {
     setEditingTechItem(null);
     setTechName('');
     setTechCategory('Language');
-    setTechIcon('<svg viewBox="0 0 24 24" className="w-12 h-12" fill="none">\n  <!-- Enter SVG icon path here -->\n</svg>');
+    setTechIcon('');
     setIsTechModalOpen(true);
   };
 
@@ -933,7 +933,19 @@ const AdminPage = () => {
                   {techItems.map((tech) => (
                     <tr key={tech.id} className="hover:bg-white/5 transition-colors">
                       <td className="p-4 text-center">
-                        <div className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg p-1.5 mx-auto text-white" dangerouslySetInnerHTML={{ __html: tech.icon }}>
+                        <div className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg p-1.5 mx-auto text-white">
+                          {tech.icon.trim().toLowerCase().startsWith('<svg') ? (
+                            <div 
+                              className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain flex items-center justify-center" 
+                              dangerouslySetInnerHTML={{ __html: tech.icon }} 
+                            />
+                          ) : (
+                            <img 
+                              src={tech.icon} 
+                              alt={tech.name} 
+                              className="w-full h-full object-contain"
+                            />
+                          )}
                         </div>
                       </td>
                       <td className="p-4">
@@ -1384,18 +1396,42 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
-                  SVG Icon Markup <span className="text-pink-300">*</span>
-                </label>
-                <textarea
-                  required
-                  rows={8}
-                  value={techIcon}
-                  onChange={(e) => setTechIcon(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 text-xs"
-                  placeholder="Paste <svg>...</svg> tag markup here..."
-                />
+              <div className="flex gap-4 items-start">
+                <div className="flex-grow">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    Icon (SVG Markup or Image URL) <span className="text-pink-300">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={techIcon}
+                    onChange={(e) => setTechIcon(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 text-xs animate-pulse-subtle"
+                    placeholder="Paste <svg>...</svg> tag markup OR enter direct image URL (e.g., https://example.com/logo.png)"
+                  />
+                </div>
+                {techIcon.trim() && (
+                  <div className="flex flex-col items-center justify-center w-20 h-20 bg-white/5 border border-white/10 rounded-lg p-2 text-white flex-shrink-0 self-end mb-1">
+                    <span className="text-[10px] text-gray-500 mb-1">Preview</span>
+                    <div className="w-10 h-10 flex items-center justify-center">
+                      {techIcon.trim().toLowerCase().startsWith('<svg') ? (
+                        <div 
+                          className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain flex items-center justify-center" 
+                          dangerouslySetInnerHTML={{ __html: techIcon }} 
+                        />
+                      ) : (
+                        <img 
+                          src={techIcon} 
+                          alt="Preview" 
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
