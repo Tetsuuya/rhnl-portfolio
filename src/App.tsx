@@ -129,7 +129,7 @@ function App() {
       </nav>
 
       {/* Mobile/Tablet Header with Hamburger */}
-      <div className="w-full py-4 sm:py-6 fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm md:hidden">
+      <header className="w-full py-4 sm:py-6 fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm md:hidden">
         <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="text-white text-base sm:text-lg font-semibold">
             Rhenel.s
@@ -150,7 +150,7 @@ function App() {
             )}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Overlay */}
       {sidebarOpen && (

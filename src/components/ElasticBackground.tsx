@@ -981,15 +981,27 @@ export const ElasticBackground: React.FC = () => {
 
       const target = e.target as HTMLElement;
       
-      // If clicking interactive elements, don't drag background or drop food
+      // If clicking interactive elements, components, or content text/assets, don't drag background or drop food
       if (
         target.closest('a') ||
         target.closest('button') ||
         target.closest('input') ||
         target.closest('textarea') ||
+        target.closest('select') ||
+        target.closest('option') ||
+        target.closest('form') ||
+        target.closest('nav') ||
+        target.closest('footer') ||
+        target.closest('header') ||
+        target.closest('aside') ||
         target.closest('.sidebar') ||
         target.closest('.chatbot') ||
-        target.closest('[role="button"]')
+        target.closest('[role="button"]') ||
+        target.closest('.preserve-3d') ||
+        target.closest('.tech-sandbox-container') ||
+        target.closest('.admin-page-container') ||
+        target.closest('.project-modal-backdrop') ||
+        ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'img', 'svg', 'path', 'li', 'ul', 'ol', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td'].includes(target.tagName.toLowerCase())
       ) {
         return;
       }

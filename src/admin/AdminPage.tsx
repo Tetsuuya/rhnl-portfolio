@@ -567,7 +567,7 @@ const AdminPage = () => {
   // Render Login Card
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[calc(100vh-120px)] w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-[calc(100vh-120px)] w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 admin-page-container">
         <div className="max-w-md w-full space-y-8 bg-black/50 border-2 border-white/20 p-8 rounded-2xl backdrop-blur-md shadow-2xl relative overflow-hidden">
           {/* Decorative glowing gradient */}
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl"></div>
@@ -636,7 +636,7 @@ const AdminPage = () => {
 
   // Render Dashboard
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative max-w-7xl">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative max-w-7xl admin-page-container">
       {/* Toast Alert */}
       {successMessage && (
         <div className="fixed top-24 right-4 z-50 p-4 bg-green-950/80 border-2 border-green-500/80 rounded-xl text-green-200 shadow-2xl backdrop-blur-md animate-fade-in-down">

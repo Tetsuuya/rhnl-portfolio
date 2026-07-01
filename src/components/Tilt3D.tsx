@@ -7,6 +7,7 @@ interface Tilt3DProps {
   maxTilt?: number; // Maximum rotation angle (degrees)
   perspective?: number; // Perspective value (px)
   scale?: number; // Scale on hover
+  onClick?: () => void;
 }
 
 export const Tilt3D: React.FC<Tilt3DProps> = ({
@@ -15,6 +16,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
   maxTilt = 12,
   perspective = 1000,
   scale = 1.03,
+  onClick,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const physicsIdRef = useRef<number | null>(null);
@@ -430,6 +432,8 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
         }
       } else if (btn) {
         btn.click();
+      } else if (onClick) {
+        onClick();
       }
     }
 
@@ -458,6 +462,7 @@ export const Tilt3D: React.FC<Tilt3DProps> = ({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onClick={onClick}
       style={{
         transformStyle: 'preserve-3d',
         position: 'relative',
