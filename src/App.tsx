@@ -85,12 +85,12 @@ function App() {
   return (
     <div className="min-h-screen w-full relative text-white overflow-x-hidden">
       {/* Dynamic Elastic Rubber Sheet Background */}
-      <ElasticBackground />
+      <ElasticBackground currentView={currentView} />
 
-      {/* Page Content Wrapper (unfolds in the wake of the slithering snake) */}
+      {/* Page Content Wrapper (unfolds in the wake of the slithering snake on home) */}
       <div
         style={{
-          clipPath: introActive ? `inset(0 ${Math.max(0, windowWidth - introX)}px 0 0)` : 'none',
+          clipPath: (currentView === 'home' && introActive) ? `inset(0 ${Math.max(0, windowWidth - introX)}px 0 0)` : 'none',
           width: '100%',
           minHeight: '100vh',
           display: 'flex',

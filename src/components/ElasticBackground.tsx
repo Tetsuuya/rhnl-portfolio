@@ -37,7 +37,16 @@ interface Particle {
   maxLife: number;
 }
 
-export const ElasticBackground: React.FC = () => {
+interface ElasticBackgroundProps {
+  currentView?: string;
+}
+
+export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentView = 'home' }) => {
+  const currentViewRef = useRef(currentView);
+  useEffect(() => {
+    currentViewRef.current = currentView;
+  }, [currentView]);
+
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<Node[]>([]);
@@ -176,6 +185,15 @@ export const ElasticBackground: React.FC = () => {
       const mouseDocY = mouse.y + scrollY;
       const heroHeight = Math.max(height, 700);
 
+      const hash = window.location.hash.slice(1) || 'home';
+      const isHome = (currentViewRef.current === 'home' || currentViewRef.current === '') && (hash === 'home' || hash === '');
+
+      // If navigated away from home during intro, unlock scroll immediately
+      if (!isHome && introPhase === 0) {
+        introPhase = 2;
+        document.body.style.overflow = '';
+      }
+
       // Expose mouse, snake, and grid data globally for card component deformations (Tilt3D)
       // Throttled to every 3 frames to reduce object allocation churn
       if (typeof window !== 'undefined' && frameCountRef.current % 3 === 0) {
@@ -184,15 +202,15 @@ export const ElasticBackground: React.FC = () => {
           y: mouse.y,
           isDown: mouse.isDown
         };
-        (window as any).__snakeSegments = segments;
+        (window as any).__snakeSegments = isHome ? segments : [];
         (window as any).__gridNodes = nodes;
         (window as any).__gridCols = cols;
         (window as any).__gridRows = rows;
         (window as any).__gridSpacing = spacing;
       }
 
-      // --- 1. SNAKE PHYSICS LOGIC (Anchored exclusively to Hero Section) ---
-      if (segments.length > 0) {
+      // --- 1. SNAKE PHYSICS LOGIC (Anchored exclusively to Home Hero Section) ---
+      if (segments.length > 0 && isHome) {
         const isMobile = width < 768;
         const snakeScale = isMobile ? 0.6 : 1.0;
 
@@ -673,14 +691,14 @@ export const ElasticBackground: React.FC = () => {
       // Clear foreground canvas (transparent background)
       fgCtx.clearRect(0, 0, width, height);
 
-      // --- 4. DRAW BIG REAL SNAKE (Offset by scroll position) ---
+      // --- 4. DRAW BIG REAL SNAKE (Offset by scroll position, strictly Home tab only) ---
       const isSnakeVisible = segments.some((seg) => {
         const sx = seg.x - scrollX;
         const sy = seg.y - scrollY;
         return sx >= -150 && sx <= width + 150 && sy >= -150 && sy <= height + 150;
       });
 
-      if (segments.length > 0 && isSnakeVisible) {
+      if (segments.length > 0 && isHome && isSnakeVisible) {
         // Switch drawing context to foreground canvas for the snake
         ctx = fgCtx;
         ctx.save();
@@ -852,57 +870,54 @@ export const ElasticBackground: React.FC = () => {
         ctx.restore();
       }
 
-      // --- 5. DRAW FOOD ITEMS ---
-      foodsRef.current.forEach((food) => {
-        const foodScreenX = food.x - scrollX;
-        const foodScreenY = food.y - scrollY;
+      // --- 5. DRAW FOOD ITEMS (Home tab only) ---
+      if (isHome) {
+        foodsRef.current.forEach((food) => {
+          const foodScreenX = food.x - scrollX;
+          const foodScreenY = food.y - scrollY;
 
-        // Frustum culling for food
-        if (
-          foodScreenX < -60 ||
-          foodScreenX > width + 60 ||
-          foodScreenY < -60 ||
-          foodScreenY > height + 60
-        ) {
-          return;
-        }
+          if (
+            foodScreenX < -60 ||
+            foodScreenX > width + 60 ||
+            foodScreenY < -60 ||
+            foodScreenY > height + 60
+          ) {
+            return;
+          }
 
-        // Pulsate scale over time
-        const pulse = 1.0 + Math.sin(frameCountRef.current * 0.08 + food.id) * 0.12;
+          const pulse = 1.0 + Math.sin(frameCountRef.current * 0.08 + food.id) * 0.12;
 
-        ctx.save();
-        ctx.translate(foodScreenX, foodScreenY);
-        ctx.scale(pulse, pulse);
+          ctx.save();
+          ctx.translate(foodScreenX, foodScreenY);
+          ctx.scale(pulse, pulse);
 
-        // Draw neon glow behind the emoji
-        const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 32);
-        glowGrad.addColorStop(0, food.type === '👍' ? 'rgba(6, 182, 212, 0.45)' : 'rgba(236, 72, 153, 0.45)');
-        glowGrad.addColorStop(0.5, 'rgba(15, 23, 42, 0.15)');
-        glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, 32, 0, Math.PI * 2);
-        ctx.fill();
+          const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 32);
+          glowGrad.addColorStop(0, food.type === '👍' ? 'rgba(6, 182, 212, 0.45)' : 'rgba(236, 72, 153, 0.45)');
+          glowGrad.addColorStop(0.5, 'rgba(15, 23, 42, 0.15)');
+          glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = glowGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, 32, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Draw outer neon ring
-        ctx.strokeStyle = food.type === '👍' ? 'rgba(6, 182, 212, 0.85)' : 'rgba(236, 72, 153, 0.85)';
-        ctx.lineWidth = 2.0;
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = food.type === '👍' ? '#06b6d4' : '#ec4899';
-        ctx.beginPath();
-        ctx.arc(0, 0, 18, 0, Math.PI * 2);
-        ctx.stroke();
+          ctx.strokeStyle = food.type === '👍' ? 'rgba(6, 182, 212, 0.85)' : 'rgba(236, 72, 153, 0.85)';
+          ctx.lineWidth = 2.0;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = food.type === '👍' ? '#06b6d4' : '#ec4899';
+          ctx.beginPath();
+          ctx.arc(0, 0, 18, 0, Math.PI * 2);
+          ctx.stroke();
 
-        // Draw Emoji
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-        ctx.font = '20px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(food.type, 0, 0);
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+          ctx.font = '20px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(food.type, 0, 0);
 
-        ctx.restore();
-      });
+          ctx.restore();
+        });
+      }
 
       // --- 6. UPDATE & DRAW PARTICLES ---
       particlesRef.current = particlesRef.current.filter((p) => {
@@ -997,18 +1012,23 @@ export const ElasticBackground: React.FC = () => {
       // Soft indentation impulse at click point (in document coordinates)
       triggerPoke(clickDocX, clickDocY, 14);
 
-      // Spawn a food item at the clicked document coordinates
-      const foodType = Math.random() > 0.5 ? '👍' : '❤️';
-      foodsRef.current.push({
-        x: clickDocX,
-        y: clickDocY,
-        id: Date.now() + Math.random(),
-        type: foodType,
-      });
+      // Spawn a food item at the clicked document coordinates (Home tab only)
+      const currentHash = window.location.hash.slice(1) || 'home';
+      const isClickHome = (currentViewRef.current === 'home' || currentViewRef.current === '') && (currentHash === 'home' || currentHash === '');
 
-      // Limit active food items to prevent screen clutter
-      if (foodsRef.current.length > 15) {
-        foodsRef.current.shift();
+      if (isClickHome) {
+        const foodType = Math.random() > 0.5 ? '👍' : '❤️';
+        foodsRef.current.push({
+          x: clickDocX,
+          y: clickDocY,
+          id: Date.now() + Math.random(),
+          type: foodType,
+        });
+
+        // Limit active food items to prevent screen clutter
+        if (foodsRef.current.length > 15) {
+          foodsRef.current.shift();
+        }
       }
     };
 
