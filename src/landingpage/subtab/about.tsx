@@ -23,6 +23,12 @@ const About = () => {
       'PostgreSQL',
       'MySQL'
     ],
+    'DevOps & Cloud Platforms': [
+      'Docker',
+      'AWS',
+      'Vercel',
+      'Git & GitHub'
+    ],
     'Tools & Technologies': [
       'Git & GitHub',
       'VS Code',

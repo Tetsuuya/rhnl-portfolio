@@ -1390,6 +1390,7 @@ const AdminPage = () => {
                     <option value="Language">Language</option>
                     <option value="Framework">Framework</option>
                     <option value="Database">Database</option>
+                    <option value="DevOps & Cloud Platforms">DevOps & Cloud Platforms</option>
                     <option value="Design">Design</option>
                     <option value="Tool">Tool</option>
                   </select>

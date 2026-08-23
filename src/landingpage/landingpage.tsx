@@ -198,14 +198,14 @@ const LandingPage = () => {
           ) : (
             <div className="flex flex-wrap justify-center gap-6">
               {/* Render Categories */}
-              {['Language', 'Framework', 'Database', 'Design', 'Tool'].map((category) => {
+              {['Language', 'Framework', 'Database', 'DevOps & Cloud Platforms', 'Design', 'Tool'].map((category) => {
                 const items = techItems.filter((t) => t.category === category);
                 if (items.length === 0) return null;
                 
                 return (
                   <Tilt3D 
                     key={category}
-                    className="w-full sm:w-[calc(50%-12px)] md:w-[calc(33.33%-16px)] xl:w-[calc(20%-20px)] min-w-[220px] max-w-[280px] rounded-xl"
+                    className="w-full sm:w-[calc(50%-12px)] md:w-[calc(33.33%-16px)] min-w-[220px] max-w-[280px] rounded-xl"
                   >
                     <div className="bg-black/40 border-2 border-white/20 rounded-xl p-5 backdrop-blur-sm transition-all duration-300 hover:border-pink-300/70 flex flex-col h-full preserve-3d">
                       <h3 className="text-lg font-bold mb-4 text-pink-300 border-b border-white/10 pb-2 translate-z-20">

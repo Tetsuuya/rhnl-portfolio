@@ -343,6 +343,7 @@ export class ResumeService {
       'Languages': [],
       'Frameworks': [],
       'Databases': [],
+      'DevOps & Cloud': [],
       'Tools': [],
       'Concepts': []
     };
@@ -351,6 +352,7 @@ export class ResumeService {
       const categoryKey = item.category === 'Language' ? 'Languages' :
                          item.category === 'Framework' ? 'Frameworks' :
                          item.category === 'Database' ? 'Databases' :
+                         item.category === 'DevOps & Cloud Platforms' ? 'DevOps & Cloud' :
                          item.category === 'Tool' ? 'Tools' :
                          item.category === 'Design' ? 'Tools' : 'Concepts';
       
