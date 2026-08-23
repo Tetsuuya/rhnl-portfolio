@@ -109,11 +109,12 @@ export const ElasticBackground: React.FC = () => {
       }
       nodesRef.current = nodes;
 
-      // Initialize big real snake (38 segments for a long python) starting off-screen left
+      // Initialize big real snake in Hero section document coordinates starting off-screen left
+      const heroHeight = Math.max(height, 700);
       const segments: SnakeSegment[] = [];
       const numSegments = 30;
       const startX = -350;
-      const startY = height / 2;
+      const startY = heroHeight / 2;
       for (let i = 0; i < numSegments; i++) {
         segments.push({
           x: startX - i * 19.0,
@@ -138,14 +139,15 @@ export const ElasticBackground: React.FC = () => {
     // Grid-indexed poke: O(radius²/spacing²) instead of O(n) full scan
     const triggerPoke = (px: number, py: number, force: number) => {
       const R = 240;
-      const nodes = nodesRef.current;
       const minC = Math.max(0, Math.floor((px - R) / spacing));
       const maxC = Math.min(cols - 1, Math.ceil((px + R) / spacing));
-      const minPR = Math.max(0, Math.floor((py - R) / spacing));
-      const maxPR = Math.min(rows - 1, Math.ceil((py + R) / spacing));
-      for (let pr = minPR; pr <= maxPR; pr++) {
-        for (let pc = minC; pc <= maxC; pc++) {
-          const node = nodes[pr * cols + pc];
+      const minR = Math.max(0, Math.floor((py - R) / spacing));
+      const maxR = Math.min(rows - 1, Math.ceil((py + R) / spacing));
+
+      const nodes = nodesRef.current;
+      for (let r = minR; r <= maxR; r++) {
+        for (let c = minC; c <= maxC; c++) {
+          const node = nodes[r * cols + c];
           if (!node) continue;
           const dx = node.x - px;
           const dy = node.y - py;
@@ -172,6 +174,7 @@ export const ElasticBackground: React.FC = () => {
 
       const mouseDocX = mouse.x + scrollX;
       const mouseDocY = mouse.y + scrollY;
+      const heroHeight = Math.max(height, 700);
 
       // Expose mouse, snake, and grid data globally for card component deformations (Tilt3D)
       // Throttled to every 3 frames to reduce object allocation churn
@@ -188,50 +191,23 @@ export const ElasticBackground: React.FC = () => {
         (window as any).__gridSpacing = spacing;
       }
 
-      // --- 1. SNAKE PHYSICS LOGIC ---
+      // --- 1. SNAKE PHYSICS LOGIC (Anchored exclusively to Hero Section) ---
       if (segments.length > 0) {
         const isMobile = width < 768;
         const snakeScale = isMobile ? 0.6 : 1.0;
 
-        // Read current section hash
-        const hash = window.location.hash.slice(1) || 'home';
-
-        // Settings based on current section
+        // Settings for Hero section snake
         let speed = 2.4 * snakeScale;
         let slitherFreq = 0.07;
         let slitherAmp = 9.0 * snakeScale;
-        let targetProximity = 45 * snakeScale;
+        const targetProximity = 45 * snakeScale;
 
-        const cursorDist = Math.sqrt((segments[0].x - mouse.x) ** 2 + (segments[0].y - mouse.y) ** 2);
-
-        if (hash === 'projects') {
-          speed = 4.2 * snakeScale;
-          slitherFreq = 0.12;
-          slitherAmp = 15.0 * snakeScale;
-          targetProximity = 60 * snakeScale;
-        } else if (hash === 'about') {
-          speed = 1.4 * snakeScale;
-          slitherFreq = 0.045;
-          slitherAmp = 5.0 * snakeScale;
-          // Curious behavior: follow the mouse cursor
-          if (mouse.x > -500 && cursorDist < 450) {
-            sTarget.x = mouse.x;
-            sTarget.y = mouse.y;
-          }
-        } else if (hash === 'experience') {
-          speed = 2.65 * snakeScale;
-          slitherFreq = 0.085;
-          slitherAmp = 10.0 * snakeScale;
-        } else if (hash === 'contacts') {
-          speed = 1.25 * snakeScale;
-          slitherFreq = 0.055;
-          slitherAmp = 6.0 * snakeScale;
-        }
+        const cursorDist = Math.sqrt((segments[0].x - mouseDocX) ** 2 + (segments[0].y - mouseDocY) ** 2);
 
         // Handle cinematic intro movement (Phase 0: Reveal from Left)
         if (introPhase === 0) {
           introX += 13.5;
-          const targetY = height / 2 + Math.sin(introX * 0.005) * 150;
+          const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 150;
           sTarget.x = introX;
           sTarget.y = targetY;
 
@@ -256,30 +232,29 @@ export const ElasticBackground: React.FC = () => {
             );
             // Spawn the head target near the right edge to steer the snake back on-screen
             sTarget.x = width - 150;
-            sTarget.y = height / 2;
+            sTarget.y = heroHeight / 2;
           }
         } else if (introPhase === 1) {
-          // Phase 1: Re-enter from the right
-          // Once the snake's head has slithered well onto the screen, transition to normal wander
+          // Phase 1: Re-enter from the right into the Hero section
           if (segments[0].x <= width - 140) {
             introPhase = 2;
           }
         }
 
-        // Search for closest food if in wander phase (introPhase === 2)
+        // Search for closest food within Hero section bounds if in wander phase (introPhase === 2)
         let targetFood: FoodItem | null = null;
         if (introPhase === 2 && foodsRef.current.length > 0) {
           const head = segments[0];
-          const headDocX = head.x + scrollX;
-          const headDocY = head.y + scrollY;
           let minDist = Infinity;
           foodsRef.current.forEach((food) => {
-            const dx = food.x - headDocX;
-            const dy = food.y - headDocY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < minDist) {
-              minDist = dist;
-              targetFood = food;
+            if (food.y <= heroHeight + 80) {
+              const dx = food.x - head.x;
+              const dy = food.y - head.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < minDist) {
+                minDist = dist;
+                targetFood = food;
+              }
             }
           });
         }
@@ -288,47 +263,29 @@ export const ElasticBackground: React.FC = () => {
         const margin = 100;
 
         if (targetFood) {
-          // Override target to go to food
-          sTarget.x = (targetFood as FoodItem).x - scrollX;
-          sTarget.y = (targetFood as FoodItem).y - scrollY;
-          speed = 4.8;
+          // Override target to go to food in Hero section
+          sTarget.x = (targetFood as FoodItem).x;
+          sTarget.y = (targetFood as FoodItem).y;
+          speed = 4.8 * snakeScale;
           slitherFreq = 0.12;
-          slitherAmp = 13.0;
+          slitherAmp = 13.0 * snakeScale;
         } else if (introPhase === 2) {
-          // Choose a new wander target if current is reached or randomly over time (only if in Phase 2)
+          // Choose a new wander target inside the Hero section
           if (distToTarget < targetProximity || Math.random() < 0.007) {
-            if (hash === 'projects') {
-              // Dart to random screen coordinates
-              sTarget.x = margin + Math.random() * (width - margin * 2);
-              sTarget.y = margin + Math.random() * (height - margin * 2);
-            } else if (hash === 'experience') {
-              // Follow a vertical timeline path
-              sTarget.x = width * 0.5 + (Math.random() - 0.5) * 160;
-              sTarget.y = margin + Math.random() * (height - margin * 2);
-            } else if (hash === 'contacts') {
-              // Circle near bottom corner
-              const cx = width - 200;
-              const cy = height - 200;
-              const angle = Math.random() * Math.PI * 2;
-              sTarget.x = cx + Math.cos(angle) * 130;
-              sTarget.y = cy + Math.sin(angle) * 130;
-            } else {
-              // Standard wander
-              sTarget.x = margin + Math.random() * (width - margin * 2);
-              sTarget.y = margin + Math.random() * (height - margin * 2);
-            }
+            sTarget.x = margin + Math.random() * (width - margin * 2);
+            sTarget.y = margin + Math.random() * (heroHeight - margin * 2);
           }
 
-          // Playful hover interaction: run away if cursor gets too close (except in curious 'about' tab)
-          if (mouse.x > -500 && cursorDist < 120 && hash !== 'about') {
-            const escapeX = segments[0].x - mouse.x;
-            const escapeY = segments[0].y - mouse.y;
+          // Playful hover interaction: avoid cursor when nearby in the Hero section
+          if (mouse.x > -500 && cursorDist < 120 && mouseDocY < heroHeight + 100) {
+            const escapeX = segments[0].x - mouseDocX;
+            const escapeY = segments[0].y - mouseDocY;
             const escapeLen = Math.sqrt(escapeX * escapeX + escapeY * escapeY) || 0.001;
             sTarget.x = segments[0].x + (escapeX / escapeLen) * 240;
             sTarget.y = segments[0].y + (escapeY / escapeLen) * 240;
 
             sTarget.x = Math.max(margin, Math.min(width - margin, sTarget.x));
-            sTarget.y = Math.max(margin, Math.min(height - margin, sTarget.y));
+            sTarget.y = Math.max(margin, Math.min(heroHeight - margin, sTarget.y));
 
             speed *= 1.85; // Dash speed
             slitherFreq *= 1.5;
@@ -359,7 +316,7 @@ export const ElasticBackground: React.FC = () => {
 
         if (introPhase === 2) {
           segments[0].x = Math.max(margin / 2, Math.min(width - margin / 2, segments[0].x));
-          segments[0].y = Math.max(margin / 2, Math.min(height - margin / 2, segments[0].y));
+          segments[0].y = Math.max(margin / 2, Math.min(heroHeight - margin / 2, segments[0].y));
         }
 
         // Body Segments Spring Follow (Rubbery stretch dynamics)
@@ -372,28 +329,26 @@ export const ElasticBackground: React.FC = () => {
           const bdy = prev.y - curr.y;
           const bdist = Math.sqrt(bdx * bdx + bdy * bdy) || 0.001;
 
-          // Position the segment exactly segmentSpacing behind the previous segment
-          // to maintain constant length and eliminate whipping momentum/oscillations
+          // Position the segment exactly segmentSpacing behind previous segment
           curr.x = prev.x - (bdx / bdist) * segmentSpacing;
           curr.y = prev.y - (bdy / bdist) * segmentSpacing;
 
-          // Clear velocity since motion is purely geometric now
           curr.vx = 0;
           curr.vy = 0;
 
           if (introPhase === 2) {
             curr.x = Math.max(margin / 2, Math.min(width - margin / 2, curr.x));
-            curr.y = Math.max(margin / 2, Math.min(height - margin / 2, curr.y));
+            curr.y = Math.max(margin / 2, Math.min(heroHeight - margin / 2, curr.y));
           }
         }
 
-        // Elastic grid sheet deformation beneath snake segments (converted to document coordinates)
+        // Elastic grid sheet deformation beneath snake segments (in Hero section document coordinates)
         // Grid-indexed spatial lookup: O(~25 cells) instead of O(n) full node scan
         const deformingRadius = 65 * snakeScale;
         segments.forEach((seg, sIdx) => {
           if (sIdx % 2 !== 0) return; // limit grid physics pokes to improve performance
-          const segDocX = seg.x + scrollX;
-          const segDocY = seg.y + scrollY;
+          const segDocX = seg.x;
+          const segDocY = seg.y;
           const minC = Math.max(0, Math.floor((segDocX - deformingRadius) / spacing));
           const maxC = Math.min(cols - 1, Math.ceil((segDocX + deformingRadius) / spacing));
           const minNR = Math.max(0, Math.floor((segDocY - deformingRadius) / spacing));
@@ -417,10 +372,8 @@ export const ElasticBackground: React.FC = () => {
         // Eating logic
         if (targetFood) {
           const head = segments[0];
-          const headDocX = head.x + scrollX;
-          const headDocY = head.y + scrollY;
-          const dx = (targetFood as FoodItem).x - headDocX;
-          const dy = (targetFood as FoodItem).y - headDocY;
+          const dx = (targetFood as FoodItem).x - head.x;
+          const dy = (targetFood as FoodItem).y - head.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 38 * snakeScale) {
@@ -460,7 +413,7 @@ export const ElasticBackground: React.FC = () => {
                 size: 2.5 + Math.random() * 3.5,
                 alpha: 1.0,
                 life: 0,
-                maxLife: 35 + Math.round(Math.random() * 25),
+                maxLife: 35 + Math.round(Math.random() * 20),
               });
             }
           }
@@ -720,11 +673,19 @@ export const ElasticBackground: React.FC = () => {
       // Clear foreground canvas (transparent background)
       fgCtx.clearRect(0, 0, width, height);
 
-      // Switch drawing context to foreground canvas for the snake
-      ctx = fgCtx;
+      // --- 4. DRAW BIG REAL SNAKE (Offset by scroll position) ---
+      const isSnakeVisible = segments.some((seg) => {
+        const sx = seg.x - scrollX;
+        const sy = seg.y - scrollY;
+        return sx >= -150 && sx <= width + 150 && sy >= -150 && sy <= height + 150;
+      });
 
-      // --- 4. DRAW BIG REAL SNAKE ---
-      if (segments.length > 0) {
+      if (segments.length > 0 && isSnakeVisible) {
+        // Switch drawing context to foreground canvas for the snake
+        ctx = fgCtx;
+        ctx.save();
+        ctx.translate(-scrollX, -scrollY);
+
         const isMobile = width < 768;
         const snakeScale = isMobile ? 0.6 : 1.0;
 
@@ -887,6 +848,8 @@ export const ElasticBackground: React.FC = () => {
           head.y + Math.sin(snakeAngle.current + pupilAngleOffset) * pupilDist - Math.cos(snakeAngle.current) * (2.4 * snakeScale)
         );
         ctx.stroke();
+
+        ctx.restore();
       }
 
       // --- 5. DRAW FOOD ITEMS ---

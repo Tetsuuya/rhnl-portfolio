@@ -16,8 +16,9 @@ function App() {
   const [introX, setIntroX] = useState<number>(0);
   const [introActive, setIntroActive] = useState<boolean>(true);
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState<boolean>(false);
 
-  // Subscribe to snake intro position custom events
+  // Subscribe to snake intro position custom events and window scrolling
   useEffect(() => {
     const handleIntro = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -29,12 +30,18 @@ function App() {
       setWindowWidth(window.innerWidth);
     };
 
+    const handleScroll = () => {
+      setIsScrolledPastHero(window.scrollY > 350);
+    };
+
     window.addEventListener('snake-intro', handleIntro);
     window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener('snake-intro', handleIntro);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -276,16 +283,22 @@ function App() {
         <Footer />
       </div>
       
-        {/* Snake Interactive Food Hint Banner */}
-        <div className="fixed bottom-6 left-6 z-40 max-w-xs bg-black/60 backdrop-blur-md border border-pink-500/30 rounded-xl p-3 shadow-lg pointer-events-none hidden sm:block">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">👍</span>
-            <div>
-              <p className="text-xs text-pink-300 font-bold uppercase tracking-wider">Interactive Grid</p>
-              <p className="text-[11px] text-gray-300">Click empty grid space to feed the Python a Like!</p>
+        {/* Snake Interactive Food Hint Banner (Only shown on Hero section) */}
+        {currentView === 'home' && (
+          <div
+            className={`fixed bottom-6 left-6 z-40 max-w-xs bg-black/60 backdrop-blur-md border border-pink-500/30 rounded-xl p-3 shadow-lg pointer-events-none hidden sm:block transition-all duration-500 ${
+              isScrolledPastHero ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">👍</span>
+              <div>
+                <p className="text-xs text-pink-300 font-bold uppercase tracking-wider">Interactive Grid</p>
+                <p className="text-[11px] text-gray-300">Click empty grid space to feed the Python a Like!</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Chatbot */}
         <Chatbot />
