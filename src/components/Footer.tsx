@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="container mx-auto px-4 sm:px-6 md:px-8 py-12 md:py-16 max-w-7xl relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-12 border-b border-white/5 pb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12 border-b border-white/5 pb-12">
           {/* Brand/About Section */}
           <div className="space-y-4">
             <div className="text-white text-xl font-bold tracking-wider">

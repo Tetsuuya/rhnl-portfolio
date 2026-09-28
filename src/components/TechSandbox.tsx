@@ -293,13 +293,13 @@ export const TechSandbox = () => {
       {/* Sandbox Container */}
       <div 
         ref={containerRef}
-        className="w-full h-[320px] sm:h-[400px] md:h-[420px] relative bg-black/55 border-2 border-white/20 rounded-2xl overflow-hidden backdrop-blur-md cursor-crosshair touch-none select-none shadow-[inset_0_4px_30px_rgba(0,0,0,0.8)]"
+        className="w-full h-[320px] sm:h-[400px] md:h-[420px] relative glass-3d rounded-3xl overflow-hidden cursor-crosshair touch-none select-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
         {/* Dynamic Glowing Accents inside sandbox */}
-        <div className="absolute top-4 left-4 text-xs font-mono text-white/30 uppercase tracking-widest pointer-events-none">
+        <div className="absolute top-4 left-4 text-xs font-mono text-white/30 uppercase tracking-widest pointer-events-none z-10">
           Skills Gravity Sandbox • Drag / Throw Blocks
         </div>
 
@@ -317,7 +317,7 @@ export const TechSandbox = () => {
               cursor: body.isDragging ? 'grabbing' : 'grab',
               transform: `translate3d(${body.x}px, ${body.y}px, 0)`,
             }}
-            className="flex items-center gap-2.5 bg-black/75 border-2 border-white/10 hover:border-pink-400/80 rounded-full px-3 py-1.5 backdrop-blur-md select-none transition-shadow hover:shadow-[0_0_15px_rgba(236,72,153,0.35)] group"
+            className="flex items-center gap-2.5 glass-3d-pill rounded-full px-3 py-1.5 select-none transition-shadow hover:shadow-[0_0_15px_rgba(236,72,153,0.35)] group z-10"
           >
             <div className="w-5 h-5 flex-shrink-0 text-white transition-transform group-hover:scale-110 flex items-center justify-center">
               {body.item.icon.trim().toLowerCase().startsWith('<svg') ? (

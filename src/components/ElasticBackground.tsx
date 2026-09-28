@@ -39,13 +39,18 @@ interface Particle {
 
 interface ElasticBackgroundProps {
   currentView?: string;
+  showGrid?: boolean;
 }
 
-export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentView = 'home' }) => {
+export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentView = 'home', showGrid = false }) => {
   const currentViewRef = useRef(currentView);
+  const showGridRef = useRef(showGrid);
   useEffect(() => {
     currentViewRef.current = currentView;
   }, [currentView]);
+  useEffect(() => {
+    showGridRef.current = showGrid;
+  }, [showGrid]);
 
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -138,6 +143,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
 
     let introPhase = 0; // 0: reveal from left, 1: re-enter from right, 2: normal background
     let introX = -350;
+    let patrolIndex = 0;
+    let wasEatingFood = false;
 
     // Lock page scroll for cinematic reveal
     document.body.style.overflow = 'hidden';
@@ -214,11 +221,58 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
         const isMobile = width < 768;
         const snakeScale = isMobile ? 0.6 : 1.0;
 
+        // Dynamic Hero Section Bounds for Perimeter Patrol
+        const heroEl = document.getElementById('hero-content');
+        let heroTop = 85;
+        let heroBottom = Math.max(heroHeight - 90, 680);
+        let heroLeft = Math.max(45, (width > 1360 ? (width - 1320) / 2 : 45));
+        let heroRight = Math.min(width - 45, (width > 1360 ? width - (width - 1320) / 2 : width - 45));
+
+        if (heroEl) {
+          const rect = heroEl.getBoundingClientRect();
+          const topDoc = rect.top + window.scrollY;
+          const bottomDoc = rect.bottom + window.scrollY;
+          const leftDoc = rect.left + window.scrollX;
+          const rightDoc = rect.right + window.scrollX;
+          if (bottomDoc > topDoc + 150 && rightDoc > leftDoc + 150) {
+            heroTop = Math.max(75, topDoc - 25);
+            heroBottom = bottomDoc + 25;
+            heroLeft = Math.max(35, leftDoc - 35);
+            heroRight = Math.min(width - 35, rightDoc + 35);
+          }
+        }
+
+        const midX = (heroLeft + heroRight) / 2;
+        const midY = (heroTop + heroBottom) / 2;
+        const corner = Math.min(90, (heroRight - heroLeft) * 0.12);
+
+        // 12-point perimeter track framing the hero perimeter clockwise
+        const waypoints = [
+          // Top edge (left to right)
+          { x: heroLeft + corner, y: heroTop },
+          { x: midX, y: heroTop - 5 },
+          { x: heroRight - corner, y: heroTop },
+
+          // Right edge (top to bottom)
+          { x: heroRight, y: heroTop + corner },
+          { x: heroRight + 5, y: midY },
+          { x: heroRight, y: heroBottom - corner },
+
+          // Bottom edge (right to left)
+          { x: heroRight - corner, y: heroBottom },
+          { x: midX, y: heroBottom + 5 },
+          { x: heroLeft + corner, y: heroBottom },
+
+          // Left edge (bottom to top)
+          { x: heroLeft, y: heroBottom - corner },
+          { x: heroLeft - 5, y: midY },
+          { x: heroLeft, y: heroTop + corner },
+        ];
+
         // Settings for Hero section snake
-        let speed = 2.4 * snakeScale;
+        let speed = 2.5 * snakeScale;
         let slitherFreq = 0.07;
-        let slitherAmp = 9.0 * snakeScale;
-        const targetProximity = 45 * snakeScale;
+        let slitherAmp = 9.5 * snakeScale;
 
         const cursorDist = Math.sqrt((segments[0].x - mouseDocX) ** 2 + (segments[0].y - mouseDocY) ** 2);
 
@@ -250,64 +304,97 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
             );
             // Spawn the head target near the right edge to steer the snake back on-screen
             sTarget.x = width - 150;
-            sTarget.y = heroHeight / 2;
+            sTarget.y = midY;
           }
         } else if (introPhase === 1) {
           // Phase 1: Re-enter from the right into the Hero section
           if (segments[0].x <= width - 140) {
             introPhase = 2;
+            // Pick closest perimeter waypoint so it immediately starts crawling around hero
+            let closestWpIdx = 0;
+            let minDist = Infinity;
+            waypoints.forEach((wp, idx) => {
+              const d = Math.hypot(segments[0].x - wp.x, segments[0].y - wp.y);
+              if (d < minDist) {
+                minDist = d;
+                closestWpIdx = idx;
+              }
+            });
+            patrolIndex = closestWpIdx;
           }
         }
 
-        // Search for closest food within Hero section bounds if in wander phase (introPhase === 2)
+        // Filter food strictly to Hero section bounds to ensure snake never targets food outside hero
+        if (heroEl) {
+          const rect = heroEl.getBoundingClientRect();
+          const topDoc = rect.top + window.scrollY - 50;
+          const bottomDoc = rect.bottom + window.scrollY + 50;
+          foodsRef.current = foodsRef.current.filter((food) => food.y >= topDoc && food.y <= bottomDoc);
+        }
+
+        // Search for closest food item if in wander phase (introPhase === 2)
         let targetFood: FoodItem | null = null;
         if (introPhase === 2 && foodsRef.current.length > 0) {
           const head = segments[0];
           let minDist = Infinity;
           foodsRef.current.forEach((food) => {
-            if (food.y <= heroHeight + 80) {
-              const dx = food.x - head.x;
-              const dy = food.y - head.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < minDist) {
-                minDist = dist;
-                targetFood = food;
-              }
+            const dx = food.x - head.x;
+            const dy = food.y - head.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minDist) {
+              minDist = dist;
+              targetFood = food;
             }
           });
         }
 
-        const distToTarget = Math.sqrt((segments[0].x - sTarget.x) ** 2 + (segments[0].y - sTarget.y) ** 2);
-        const margin = 100;
+        const margin = 80;
 
         if (targetFood) {
-          // Override target to go to food in Hero section
+          // Food dropped (even in center): leave perimeter and rush straight to food!
+          wasEatingFood = true;
           sTarget.x = (targetFood as FoodItem).x;
           sTarget.y = (targetFood as FoodItem).y;
           speed = 4.8 * snakeScale;
           slitherFreq = 0.12;
           slitherAmp = 13.0 * snakeScale;
         } else if (introPhase === 2) {
-          // Choose a new wander target inside the Hero section
-          if (distToTarget < targetProximity || Math.random() < 0.007) {
-            sTarget.x = margin + Math.random() * (width - margin * 2);
-            sTarget.y = margin + Math.random() * (heroHeight - margin * 2);
+          // When all food is consumed, return directly to the nearest perimeter point around the hero!
+          if (wasEatingFood) {
+            let closestWpIdx = 0;
+            let minDist = Infinity;
+            waypoints.forEach((wp, idx) => {
+              const d = Math.hypot(segments[0].x - wp.x, segments[0].y - wp.y);
+              if (d < minDist) {
+                minDist = d;
+                closestWpIdx = idx;
+              }
+            });
+            patrolIndex = closestWpIdx;
+            wasEatingFood = false;
           }
 
-          // Playful hover interaction: avoid cursor when nearby in the Hero section
-          if (mouse.x > -500 && cursorDist < 120 && mouseDocY < heroHeight + 100) {
-            const escapeX = segments[0].x - mouseDocX;
-            const escapeY = segments[0].y - mouseDocY;
-            const escapeLen = Math.sqrt(escapeX * escapeX + escapeY * escapeY) || 0.001;
-            sTarget.x = segments[0].x + (escapeX / escapeLen) * 240;
-            sTarget.y = segments[0].y + (escapeY / escapeLen) * 240;
+          // Follow perimeter waypoint loop around the hero
+          const wp = waypoints[patrolIndex % waypoints.length];
+          const wave = Math.sin(frameCountRef.current * 0.05 + patrolIndex) * 6 * snakeScale;
+          sTarget.x = wp.x + (patrolIndex % 3 === 1 ? 0 : wave);
+          sTarget.y = wp.y + (patrolIndex % 3 === 1 ? wave : 0);
 
-            sTarget.x = Math.max(margin, Math.min(width - margin, sTarget.x));
-            sTarget.y = Math.max(margin, Math.min(heroHeight - margin, sTarget.y));
+          speed = 2.5 * snakeScale;
+          slitherFreq = 0.07;
+          slitherAmp = 9.5 * snakeScale;
 
-            speed *= 1.85; // Dash speed
-            slitherFreq *= 1.5;
-            slitherAmp *= 1.35;
+          // Check proximity to advance to next perimeter waypoint
+          const distToWp = Math.hypot(segments[0].x - wp.x, segments[0].y - wp.y);
+          if (distToWp < 75 * snakeScale) {
+            patrolIndex = (patrolIndex + 1) % waypoints.length;
+          }
+
+          // Playful hover interaction: if cursor approaches, snake dashes forward along its perimeter route
+          if (mouse.x > -500 && cursorDist < 120 && mouseDocY < heroBottom + 80) {
+            speed *= 1.75;
+            slitherFreq *= 1.4;
+            slitherAmp *= 1.3;
           }
         }
 
@@ -333,8 +420,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
         segments[0].y += (hdy / hdist) * currentSpeed + perpY * 0.16;
 
         if (introPhase === 2) {
-          segments[0].x = Math.max(margin / 2, Math.min(width - margin / 2, segments[0].x));
-          segments[0].y = Math.max(margin / 2, Math.min(heroHeight - margin / 2, segments[0].y));
+          segments[0].x = Math.max(margin / 3, Math.min(width - margin / 3, segments[0].x));
+          segments[0].y = Math.max(margin / 3, Math.min(heroBottom + 60, segments[0].y));
         }
 
         // Body Segments Spring Follow (Rubbery stretch dynamics)
@@ -355,8 +442,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
           curr.vy = 0;
 
           if (introPhase === 2) {
-            curr.x = Math.max(margin / 2, Math.min(width - margin / 2, curr.x));
-            curr.y = Math.max(margin / 2, Math.min(heroHeight - margin / 2, curr.y));
+            curr.x = Math.max(margin / 3, Math.min(width - margin / 3, curr.x));
+            curr.y = Math.max(margin / 3, Math.min(heroBottom + 60, curr.y));
           }
         }
 
@@ -542,151 +629,155 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       }
 
       // --- 3. RENDER GRID CANVAS ---
-      // Render solid black background
-      bgCtx.fillStyle = '#000000';
-      bgCtx.fillRect(0, 0, width, height);
-
       let ctx = bgCtx;
 
-      // Draw dynamic radial background light centered on cursor
-      if (mouse.x > -500) {
-        const radGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 280);
-        radGrad.addColorStop(0, 'rgba(147, 51, 234, 0.12)'); // Soft glowing purple core
-        radGrad.addColorStop(0.5, 'rgba(236, 72, 153, 0.04)'); // Glowing pink bleed
-        radGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = radGrad;
-        ctx.fillRect(0, 0, width, height);
-      }
+      if (showGridRef.current) {
+        bgCtx.fillStyle = '#000000';
+        bgCtx.fillRect(0, 0, width, height);
 
-      // Group tension lines so we can draw them individually.
-      // Batch neutral lines into a single path.
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
-      const tensionLines: Array<{x1: number, y1: number, x2: number, y2: number, strokeStyle: string}> = [];
+        // Draw dynamic radial background light centered on cursor
+        if (mouse.x > -500) {
+          const radGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 280);
+          radGrad.addColorStop(0, 'rgba(147, 51, 234, 0.12)'); // Soft glowing purple core
+          radGrad.addColorStop(0.5, 'rgba(236, 72, 153, 0.04)'); // Glowing pink bleed
+          radGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = radGrad;
+          ctx.fillRect(0, 0, width, height);
+        }
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const idx = r * cols + c;
-          const node = nodes[idx];
-          if (!node) continue;
+        // Group tension lines so we can draw them individually.
+        // Batch neutral lines into a single path.
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+        const tensionLines: Array<{x1: number, y1: number, x2: number, y2: number, strokeStyle: string}> = [];
 
-          // Frustum culling: check if node is visible in viewport plus padding
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const idx = r * cols + c;
+            const node = nodes[idx];
+            if (!node) continue;
+
+            // Frustum culling: check if node is visible in viewport plus padding
+            const screenX = node.x - scrollX;
+            const screenY = node.y - scrollY;
+            if (screenX < -spacing || screenX > width + spacing || screenY < -spacing || screenY > height + spacing) {
+              continue;
+            }
+
+            // Draw connections to Right neighbor
+            if (c < cols - 1) {
+              const right = nodes[idx + 1];
+              if (right) {
+                const dx = right.x - node.x;
+                const dy = right.y - node.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+                const tension = Math.min(Math.abs(dist - spacing) / spacing, 1);
+                
+                if (tension > 0.05) {
+                  tensionLines.push({
+                    x1: node.x - scrollX,
+                    y1: node.y - scrollY,
+                    x2: right.x - scrollX,
+                    y2: right.y - scrollY,
+                    strokeStyle: `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
+                  });
+                } else {
+                  ctx.moveTo(node.x - scrollX, node.y - scrollY);
+                  ctx.lineTo(right.x - scrollX, right.y - scrollY);
+                }
+              }
+            }
+
+            // Draw connections to Down neighbor
+            if (r < rows - 1) {
+              const down = nodes[idx + cols];
+              if (down) {
+                const dx = down.x - node.x;
+                const dy = down.y - node.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+                const tension = Math.min(Math.abs(dist - spacing) / spacing, 1);
+                
+                if (tension > 0.05) {
+                  tensionLines.push({
+                    x1: node.x - scrollX,
+                    y1: node.y - scrollY,
+                    x2: down.x - scrollX,
+                    y2: down.y - scrollY,
+                    strokeStyle: `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
+                  });
+                } else {
+                  ctx.moveTo(node.x - scrollX, node.y - scrollY);
+                  ctx.lineTo(down.x - scrollX, down.y - scrollY);
+                }
+              }
+            }
+          }
+        }
+        // Stroke all neutral connections in one go
+        ctx.stroke();
+
+        // Now draw all tension lines
+        tensionLines.forEach((line) => {
+          ctx.strokeStyle = line.strokeStyle;
+          ctx.beginPath();
+          ctx.moveTo(line.x1, line.y1);
+          ctx.lineTo(line.x2, line.y2);
+          ctx.stroke();
+        });
+
+        // Draw soft node dots (intersections offset by scroll)
+        // Batch neutral dots (opacity 0.08) and render custom opacity dots separately.
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+        
+        const customDots: Array<{ x: number; y: number; opacity: number }> = [];
+
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i];
+          
           const screenX = node.x - scrollX;
           const screenY = node.y - scrollY;
-          if (screenX < -spacing || screenX > width + spacing || screenY < -spacing || screenY > height + spacing) {
+          
+          // Frustum culling for dots
+          if (screenX < -10 || screenX > width + 10 || screenY < -10 || screenY > height + 10) {
             continue;
           }
 
-          // Draw connections to Right neighbor
-          if (c < cols - 1) {
-            const right = nodes[idx + 1];
-            if (right) {
-              const dx = right.x - node.x;
-              const dy = right.y - node.y;
-              const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-              const tension = Math.min(Math.abs(dist - spacing) / spacing, 1);
-              
-              if (tension > 0.05) {
-                tensionLines.push({
-                  x1: node.x - scrollX,
-                  y1: node.y - scrollY,
-                  x2: right.x - scrollX,
-                  y2: right.y - scrollY,
-                  strokeStyle: `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
-                });
-              } else {
-                ctx.moveTo(node.x - scrollX, node.y - scrollY);
-                ctx.lineTo(right.x - scrollX, right.y - scrollY);
-              }
+          const dx = screenX - mouse.x;
+          const dy = screenY - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          const distToOrig = Math.sqrt((node.x - node.ox)**2 + (node.y - node.oy)**2);
+          
+          if (dist < 180 || distToOrig > 2) {
+            let opacity = 0.08;
+            if (dist < 180) {
+              opacity += ((180 - dist) / 180) * 0.16;
             }
-          }
-
-          // Draw connections to Down neighbor
-          if (r < rows - 1) {
-            const down = nodes[idx + cols];
-            if (down) {
-              const dx = down.x - node.x;
-              const dy = down.y - node.y;
-              const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-              const tension = Math.min(Math.abs(dist - spacing) / spacing, 1);
-              
-              if (tension > 0.05) {
-                tensionLines.push({
-                  x1: node.x - scrollX,
-                  y1: node.y - scrollY,
-                  x2: down.x - scrollX,
-                  y2: down.y - scrollY,
-                  strokeStyle: `rgba(236, 72, 153, ${0.18 + tension * 0.35})`
-                });
-              } else {
-                ctx.moveTo(node.x - scrollX, node.y - scrollY);
-                ctx.lineTo(down.x - scrollX, down.y - scrollY);
-              }
+            if (distToOrig > 2) {
+              opacity += distToOrig * 0.045;
             }
+            opacity = Math.min(0.24, opacity);
+            customDots.push({ x: screenX, y: screenY, opacity });
+          } else {
+            // Neutral dot: batch path
+            ctx.moveTo(screenX + 1.5, screenY);
+            ctx.arc(screenX, screenY, 1.5, 0, Math.PI * 2);
           }
         }
+        ctx.fill(); // Fill all neutral dots at once
+
+        // Draw custom opacity dots individually
+        customDots.forEach((dot) => {
+          ctx.fillStyle = `rgba(6, 182, 212, ${dot.opacity})`;
+          ctx.beginPath();
+          ctx.arc(dot.x, dot.y, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else {
+        // Transparent when grid is disabled, allowing sleek AmbientBackground to show
+        bgCtx.clearRect(0, 0, width, height);
       }
-      // Stroke all neutral connections in one go
-      ctx.stroke();
-
-      // Now draw all tension lines
-      tensionLines.forEach((line) => {
-        ctx.strokeStyle = line.strokeStyle;
-        ctx.beginPath();
-        ctx.moveTo(line.x1, line.y1);
-        ctx.lineTo(line.x2, line.y2);
-        ctx.stroke();
-      });
-
-      // Draw soft node dots (intersections offset by scroll)
-      // Batch neutral dots (opacity 0.08) and render custom opacity dots separately.
-      ctx.beginPath();
-      ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
-      
-      const customDots: Array<{ x: number; y: number; opacity: number }> = [];
-
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        
-        const screenX = node.x - scrollX;
-        const screenY = node.y - scrollY;
-        
-        // Frustum culling for dots
-        if (screenX < -10 || screenX > width + 10 || screenY < -10 || screenY > height + 10) {
-          continue;
-        }
-
-        const dx = screenX - mouse.x;
-        const dy = screenY - mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        
-        const distToOrig = Math.sqrt((node.x - node.ox)**2 + (node.y - node.oy)**2);
-        
-        if (dist < 180 || distToOrig > 2) {
-          let opacity = 0.08;
-          if (dist < 180) {
-            opacity += ((180 - dist) / 180) * 0.16;
-          }
-          if (distToOrig > 2) {
-            opacity += distToOrig * 0.045;
-          }
-          opacity = Math.min(0.24, opacity);
-          customDots.push({ x: screenX, y: screenY, opacity });
-        } else {
-          // Neutral dot: batch path
-          ctx.moveTo(screenX + 1.5, screenY);
-          ctx.arc(screenX, screenY, 1.5, 0, Math.PI * 2);
-        }
-      }
-      ctx.fill(); // Fill all neutral dots at once
-
-      // Draw custom opacity dots individually
-      customDots.forEach((dot) => {
-        ctx.fillStyle = `rgba(6, 182, 212, ${dot.opacity})`;
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      });
 
       // Clear foreground canvas (transparent background)
       fgCtx.clearRect(0, 0, width, height);
@@ -724,8 +815,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
           const rightTipX = midX + Math.cos(snakeAngle.current + forkAngle) * forkLen;
           const rightTipY = midY + Math.sin(snakeAngle.current + forkAngle) * forkLen;
 
-          ctx.strokeStyle = '#ff2b42'; // bright blood red
-          ctx.lineWidth = 4.0 * snakeScale;
+          ctx.strokeStyle = '#991b1b'; // natural deep dark crimson
+          ctx.lineWidth = 3.5 * snakeScale;
           ctx.beginPath();
           ctx.moveTo(startX, startY);
           ctx.lineTo(midX, midY);
@@ -755,20 +846,22 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
             radius = 29.0 * snakeScale * (1 - tailProgress * 0.85);
           }
 
-          // Interpolated snake colors (Cyan glowing head, purple body, pink tail)
+          // Natural Emerald Tree Python Color Palette (Authentic biological python)
           const progress = i / (segments.length - 1);
-          const rc = Math.round(6 + (236 - 6) * progress);
-          const gc = Math.round(182 + (72 - 182) * progress);
-          const bc = Math.round(212 + (153 - 212) * progress);
-          const alpha = 0.88 - progress * 0.35;
+          // Head: Rich organic emerald (#2ea04e) -> Tail: Deep botanical moss (#0e371e)
+          const rc = Math.round(46 + (14 - 46) * progress);
+          const gc = Math.round(160 + (55 - 160) * progress);
+          const bc = Math.round(78 + (30 - 78) * progress);
+          const alpha = 0.94 - progress * 0.10;
 
           const bodyColor = `rgba(${rc}, ${gc}, ${bc}, ${alpha})`;
-          const patternColor = `rgba(${Math.round(rc * 0.45)}, ${Math.round(gc * 0.45)}, ${Math.round(bc * 0.45)}, ${alpha})`;
+          const patternColor = `rgba(${Math.round(rc * 0.35)}, ${Math.round(gc * 0.45)}, ${Math.round(bc * 0.35)}, ${alpha})`;
 
           ctx.fillStyle = bodyColor;
           ctx.strokeStyle = bodyColor;
-          ctx.shadowBlur = i === 0 ? 24 * snakeScale : i < 15 ? 12 * snakeScale : 4 * snakeScale;
-          ctx.shadowColor = `rgba(${rc}, ${gc}, ${bc}, 0.55)`;
+          // Natural soft contact drop shadow (grounded, not glowing AI neon)
+          ctx.shadowBlur = i === 0 ? 10 * snakeScale : 5 * snakeScale;
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
 
           if (i === 0) {
             // Draw head snout as a beautiful python skull shape rotated to heading
@@ -818,7 +911,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
 
         ctx.shadowBlur = 0; // Reset shadows
 
-        // Draw glowing python eyes on the head segment
+        // Realistic golden-amber python eyes with dark vertical slit pupils
         const head = segments[0];
         const eyeAngleOffset = 0.38;
         const eyeDist = 10.4 * snakeScale;
@@ -830,18 +923,33 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
         const rightEyeX = head.x + Math.cos(snakeAngle.current + eyeAngleOffset) * eyeDist;
         const rightEyeY = head.y + Math.sin(snakeAngle.current + eyeAngleOffset) * eyeDist;
 
-        ctx.fillStyle = '#ffffff';
+        // Dark forest-charcoal socket rim
+        ctx.fillStyle = '#0a1a0f';
+        ctx.beginPath();
+        ctx.arc(leftEyeX, leftEyeY, eyeRadius + 0.8 * snakeScale, 0, Math.PI * 2);
+        ctx.arc(rightEyeX, rightEyeY, eyeRadius + 0.8 * snakeScale, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Realistic golden-amber iris
+        ctx.fillStyle = '#f59e0b';
         ctx.beginPath();
         ctx.arc(leftEyeX, leftEyeY, eyeRadius, 0, Math.PI * 2);
         ctx.arc(rightEyeX, rightEyeY, eyeRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Slit pupils for extra realistic snake eyes
+        // Inner warm highlight ring
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(leftEyeX, leftEyeY, eyeRadius * 0.6, 0, Math.PI * 2);
+        ctx.arc(rightEyeX, rightEyeY, eyeRadius * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Slit pupils in deep black
         const pupilAngleOffset = 0.38;
-        const pupilDist = 11.2 * snakeScale;
+        const pupilDist = 11.0 * snakeScale;
         
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2.0 * snakeScale;
+        ctx.strokeStyle = '#051008';
+        ctx.lineWidth = 1.8 * snakeScale;
         
         // Left eye vertical slit pupil
         ctx.beginPath();
@@ -959,7 +1067,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
 
       const target = e.target as HTMLElement;
       
-      // If clicking interactive elements, components, or content text/assets, don't drag background or drop food
+      // If clicking interactive controls, links, forms, or modal backdrops, don't drag background or drop food
       if (
         target.closest('a') ||
         target.closest('button') ||
@@ -975,11 +1083,9 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
         target.closest('.sidebar') ||
         target.closest('.chatbot') ||
         target.closest('[role="button"]') ||
-        target.closest('.preserve-3d') ||
         target.closest('.tech-sandbox-container') ||
         target.closest('.admin-page-container') ||
-        target.closest('.project-modal-backdrop') ||
-        ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'img', 'svg', 'path', 'li', 'ul', 'ol', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td'].includes(target.tagName.toLowerCase())
+        target.closest('.project-modal-backdrop')
       ) {
         return;
       }
@@ -1012,22 +1118,52 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       // Soft indentation impulse at click point (in document coordinates)
       triggerPoke(clickDocX, clickDocY, 14);
 
-      // Spawn a food item at the clicked document coordinates (Home tab only)
+      // Spawn a food item at the clicked document coordinates (Strictly Hero section on Home tab only)
       const currentHash = window.location.hash.slice(1) || 'home';
       const isClickHome = (currentViewRef.current === 'home' || currentViewRef.current === '') && (currentHash === 'home' || currentHash === '');
 
       if (isClickHome) {
-        const foodType = Math.random() > 0.5 ? '👍' : '❤️';
-        foodsRef.current.push({
-          x: clickDocX,
-          y: clickDocY,
-          id: Date.now() + Math.random(),
-          type: foodType,
-        });
+        // Enforce that food can ONLY be placed inside the Hero section
+        const heroEl = document.getElementById('hero-content');
+        let isInsideHero = false;
 
-        // Limit active food items to prevent screen clutter
-        if (foodsRef.current.length > 15) {
-          foodsRef.current.shift();
+        if (heroEl) {
+          const rect = heroEl.getBoundingClientRect();
+          const topDoc = rect.top + window.scrollY;
+          const bottomDoc = rect.bottom + window.scrollY;
+          const leftDoc = rect.left + window.scrollX;
+          const rightDoc = rect.right + window.scrollX;
+
+          // Generous margin around hero content matching snake perimeter
+          const margin = 45;
+          if (
+            clickDocX >= leftDoc - margin &&
+            clickDocX <= rightDoc + margin &&
+            clickDocY >= topDoc - margin &&
+            clickDocY <= bottomDoc + margin
+          ) {
+            isInsideHero = true;
+          }
+        } else {
+          // Fallback if heroEl is not yet mounted: only within first viewport screen
+          if (clickDocY <= window.innerHeight * 0.9) {
+            isInsideHero = true;
+          }
+        }
+
+        if (isInsideHero) {
+          const foodType = Math.random() > 0.5 ? '👍' : '❤️';
+          foodsRef.current.push({
+            x: clickDocX,
+            y: clickDocY,
+            id: Date.now() + Math.random(),
+            type: foodType,
+          });
+
+          // Limit active food items to prevent screen clutter
+          if (foodsRef.current.length > 15) {
+            foodsRef.current.shift();
+          }
         }
       }
     };
