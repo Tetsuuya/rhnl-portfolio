@@ -144,12 +144,12 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       // Initialize big real snake in Hero section document coordinates starting off-screen left
       const heroHeight = Math.max(height, 700);
       const segments: SnakeSegment[] = [];
-      const numSegments = 30;
-      const startX = -350;
+      const numSegments = 22;
+      const startX = -200;
       const startY = heroHeight / 2;
       for (let i = 0; i < numSegments; i++) {
         segments.push({
-          x: startX - i * 19.0,
+          x: startX - i * 18.0,
           y: startY,
           vx: 0,
           vy: 0,
@@ -162,7 +162,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
     const isMobileInitial = window.innerWidth < 768;
     // introPhase: 0 = running intro slither, 3 = finished & idle (0% CPU)
     let introPhase = isMobileInitial || !enableSnakeRef.current ? 3 : 0;
-    let introX = -350;
+    let introX = -200;
     let patrolIndex = 0;
     let wasEatingFood = false;
 
@@ -313,8 +313,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
 
         // Cinematic intro movement (Phase 0: Reveal from Left)
         if (introPhase === 0) {
-          introX += 17.0;
-          const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 110;
+          introX += 36.0;
+          const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 80;
           sTarget.x = introX;
           sTarget.y = targetY;
 
@@ -421,9 +421,9 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
 
         // In intro phase 0 and 1, we want the snake to move faster to slither in/out nicely
         const inIntro = (introPhase === 0 || introPhase === 1);
-        const currentSpeed = inIntro ? 15.5 * snakeScale : speed;
-        const currentSlitherFreq = inIntro ? 0.095 : slitherFreq;
-        const currentSlitherAmp = inIntro ? 18.0 * snakeScale : slitherAmp;
+        const currentSpeed = inIntro ? 34.0 * snakeScale : speed;
+        const currentSlitherFreq = inIntro ? 0.16 : slitherFreq;
+        const currentSlitherAmp = inIntro ? 12.0 * snakeScale : slitherAmp;
 
         // Add perpendicular slither waves to head
         const slitherVal = Math.sin(frameCountRef.current * currentSlitherFreq) * currentSlitherAmp;
