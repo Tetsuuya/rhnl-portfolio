@@ -84,112 +84,17 @@ const LandingPage = () => {
   return (
     <>
       {/* Hero Section Container with subtle dark ambient glow matching mockup */}
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 md:pt-10 pb-8 sm:pb-12 md:pb-16 max-w-7xl relative">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 pt-2 sm:pt-6 md:pt-10 pb-6 sm:pb-12 md:pb-16 max-w-7xl relative">
         {/* Soft atmospheric ambient glow */}
         <div className="absolute top-1/4 right-10 w-[380px] sm:w-[500px] h-[380px] sm:h-[500px] bg-radial from-cyan-500/10 via-blue-500/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
         <div className="absolute top-1/3 left-0 w-[300px] h-[300px] bg-radial from-purple-500/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-        <div id="hero-content" className="flex flex-col lg:flex-row items-center justify-between min-h-[calc(100vh-220px)] gap-10 sm:gap-12 lg:gap-16 xl:gap-24 mb-12 sm:mb-16">
-          {/* Left Content Area - Grounded & Stable without motion wobble */}
-          <div className="flex-1 max-w-2xl text-center lg:text-left w-full">
-            <div className="flex flex-col items-center lg:items-start">
-              <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl mb-2 sm:mb-3 font-medium cursor-default">
-                Hi, I'm Rhenel,
-              </p>
-              <h1 className="text-white text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-5 leading-[1.18] sm:leading-[1.15] tracking-tight cursor-default">
-                <span className="block break-words sm:whitespace-nowrap">I'M A FULL-STACK</span>
-                <span className="block text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-gray-200">DEVELOPER</span>
-              </h1>
-              <p className="text-gray-400 text-xs sm:text-sm md:text-base mb-6 sm:mb-8 leading-relaxed max-w-xl cursor-default px-1 sm:px-0">
-                I specialize in building modern, scalable web applications with a focus on clean code, great user experiences, and robust backend solutions. Passionate about turning ideas into reality through technology.
-              </p>
-
-              {/* Technologies & Tools Stack Showcase (Matching Mockup) */}
-              <div className="w-full flex flex-col items-center lg:items-start gap-4 mb-6">
-                {/* Row 1: Brand Technology Logos */}
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 md:gap-7 py-1">
-                  {/* AWS */}
-                  <div className="flex items-center justify-center h-7 sm:h-8 transition-transform duration-300 hover:scale-110" title="AWS">
-                    <img src={awsLogo} alt="AWS" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
-                  </div>
-                  {/* Kubernetes */}
-                  <div className="flex items-center justify-center h-7 sm:h-8 transition-transform duration-300 hover:scale-110" title="Kubernetes">
-                    <img src={k8sLogo} alt="Kubernetes" className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 object-contain" />
-                  </div>
-                  {/* Go */}
-                  <div className="flex items-center justify-center h-7 sm:h-8 transition-transform duration-300 hover:scale-110" title="Go (Golang)">
-                    <img src={goLogo} alt="Go" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
-                  </div>
-                  {/* Rust */}
-                  <div className="flex items-center justify-center h-7 sm:h-8 transition-transform duration-300 hover:scale-110" title="Rust">
-                    <img src={rustLogo} alt="Rust" className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 object-contain" />
-                  </div>
-                  {/* React */}
-                  <div className="flex items-center justify-center h-7 sm:h-8 transition-transform duration-300 hover:scale-110" title="React">
-                    <img src={reactLogo} alt="React" className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 object-contain" />
-                  </div>
-                  {/* PostgreSQL */}
-                  <div className="flex items-center justify-center h-7 sm:h-8 transition-transform duration-300 hover:scale-110" title="PostgreSQL">
-                    <img src={postgresLogo} alt="PostgreSQL" className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 object-contain" />
-                  </div>
-                </div>
-
-                {/* Row 2: 5 Modern 3D Glass Tech Cards */}
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-2.5 md:gap-3">
-                  {/* TensorFlow */}
-                  <div className="glass-3d flex flex-col items-center justify-center w-[66px] xs:w-[74px] sm:w-[82px] h-[64px] xs:h-[72px] sm:h-[78px] rounded-xl hover:border-amber-400/50 transition-all duration-300 group">
-                    <img src={tfLogo} alt="TensorFlow" className="relative z-10 w-5 xs:w-6 h-5 xs:h-6 mb-1 object-contain" />
-                    <span className="relative z-10 text-[9px] xs:text-[10px] sm:text-[11px] text-gray-200 font-medium tracking-tight">TensorFlow</span>
-                  </div>
-
-                  {/* PyTorch */}
-                  <div className="glass-3d flex flex-col items-center justify-center w-[66px] xs:w-[74px] sm:w-[82px] h-[64px] xs:h-[72px] sm:h-[78px] rounded-xl hover:border-red-400/50 transition-all duration-300 group">
-                    <img src={pytorchLogo} alt="PyTorch" className="relative z-10 w-5 xs:w-6 h-5 xs:h-6 mb-1 object-contain" />
-                    <span className="relative z-10 text-[9px] xs:text-[10px] sm:text-[11px] text-gray-200 font-medium tracking-tight">PyTorch</span>
-                  </div>
-
-                  {/* Hugging Face */}
-                  <div className="glass-3d flex flex-col items-center justify-center w-[66px] xs:w-[74px] sm:w-[82px] h-[64px] xs:h-[72px] sm:h-[78px] rounded-xl hover:border-yellow-400/50 transition-all duration-300 group">
-                    <img src={huggingfaceLogo} alt="Hugging Face" className="relative z-10 w-5 xs:w-6 h-5 xs:h-6 mb-1 object-contain" />
-                    <span className="relative z-10 text-[9px] xs:text-[10px] sm:text-[11px] text-gray-200 font-medium tracking-tight">Hugging Face</span>
-                  </div>
-
-                  {/* LangChain */}
-                  <div className="glass-3d flex flex-col items-center justify-center w-[66px] xs:w-[74px] sm:w-[82px] h-[64px] xs:h-[72px] sm:h-[78px] rounded-xl hover:border-emerald-400/50 transition-all duration-300 group">
-                    <img src={langchainLogo} alt="LangChain" className="relative z-10 w-5 xs:w-6 h-5 xs:h-6 mb-1 object-contain" />
-                    <span className="relative z-10 text-[9px] xs:text-[10px] sm:text-[11px] text-gray-200 font-medium tracking-tight">LangChain</span>
-                  </div>
-
-                  {/* Vector DB */}
-                  <div className="glass-3d flex flex-col items-center justify-center w-[66px] xs:w-[74px] sm:w-[82px] h-[64px] xs:h-[72px] sm:h-[78px] rounded-xl hover:border-cyan-400/50 transition-all duration-300 group">
-                    <img src={vectordbLogo} alt="Vector DB" className="relative z-10 w-5 xs:w-6 h-5 xs:h-6 mb-1 object-contain" />
-                    <span className="relative z-10 text-[9px] xs:text-[10px] sm:text-[11px] text-gray-200 font-medium tracking-tight">Vector DB</span>
-                  </div>
-                </div>
-
-                {/* Subtitle label */}
-                <p className="text-gray-400 text-xs sm:text-sm font-medium mt-1 tracking-wide">
-                  Technologies & Tools
-                </p>
-              </div>
-
-              {/* View My Projects Button (Matching Mockup's sleek bordered button style) */}
-              <div className="pt-2">
-                <a 
-                  href="#projects" 
-                  className="glass-3d inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-white text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105 hover:border-white/40"
-                >
-                  <span className="relative z-10">View My Projects</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Content Area - Profile Picture (High-end 3D Glass Square Portrait with beveled rims) */}
-          <div className="flex-1 flex justify-center items-center w-full mt-4 lg:mt-0">
+        <div id="hero-content" className="flex flex-col lg:flex-row items-center justify-between min-h-0 lg:min-h-[calc(100vh-220px)] gap-6 sm:gap-10 lg:gap-16 xl:gap-24 mb-8 sm:mb-12 lg:mb-16">
+          {/* Right Content Area (Top on mobile, Right on desktop) - Profile Picture */}
+          <div className="order-first lg:order-last flex-1 flex justify-center items-center w-full mb-2 lg:mb-0">
             <div className="flex flex-col items-center">
               {/* Outer 3D square glass frame container */}
-              <div className="glass-3d w-52 h-52 xs:w-60 xs:h-60 sm:w-72 sm:h-72 md:w-84 md:h-84 lg:w-[370px] lg:h-[370px] xl:w-[400px] xl:h-[400px] max-w-[85vw] max-h-[85vw] rounded-3xl flex items-center justify-center relative transition-all duration-300 hover:border-white/30 p-3 sm:p-4.5">
+              <div className="glass-3d w-44 h-44 xs:w-52 xs:h-52 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-[370px] lg:h-[370px] xl:w-[400px] xl:h-[400px] max-w-[85vw] max-h-[85vw] rounded-3xl flex items-center justify-center relative transition-all duration-300 hover:border-white/30 p-2.5 sm:p-4.5">
                 {/* Inner square image wrapper with cut bevel rim */}
                 <div className="w-full h-full rounded-2xl overflow-hidden border border-white/20 relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.8),0_0_25px_rgba(0,0,0,0.6)]">
                   <img 
@@ -207,22 +112,117 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              {/* Clean minimalist FULL-STACK DEVELOPER title below avatar */}
-              <div className="mt-5 sm:mt-6 text-center">
+              {/* Clean minimalist FULL-STACK DEVELOPER title below avatar (Desktop only to prevent mobile duplication) */}
+              <div className="hidden lg:block mt-5 sm:mt-6 text-center">
                 <span className="text-white text-xs sm:text-sm md:text-base font-bold uppercase tracking-[0.25em] text-gray-200">
                   FULL-STACK DEVELOPER
                 </span>
               </div>
             </div>
           </div>
+
+          {/* Left Content Area (Below portrait on mobile, Left on desktop) */}
+          <div className="order-last lg:order-first flex-1 max-w-2xl text-center lg:text-left w-full">
+            <div className="flex flex-col items-center lg:items-start">
+              <p className="text-gray-300 text-sm sm:text-base md:text-lg lg:text-xl mb-1.5 sm:mb-3 font-medium cursor-default">
+                Hi, I'm Rhenel,
+              </p>
+              <h1 className="text-white text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 sm:mb-5 leading-[1.18] sm:leading-[1.15] tracking-tight cursor-default">
+                <span className="block break-words sm:whitespace-nowrap">I'M A FULL-STACK</span>
+                <span className="block text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-gray-200">DEVELOPER</span>
+              </h1>
+              <p className="text-gray-400 text-xs sm:text-sm md:text-base mb-5 sm:mb-8 leading-relaxed max-w-xl cursor-default px-1 sm:px-0">
+                I specialize in building modern, scalable web applications with a focus on clean code, great user experiences, and robust backend solutions. Passionate about turning ideas into reality through technology.
+              </p>
+
+              {/* Technologies & Tools Stack Showcase (Matching Mockup) */}
+              <div className="w-full flex flex-col items-center lg:items-start gap-3.5 sm:gap-4 mb-5 sm:mb-6">
+                {/* Row 1: Brand Technology Logos */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 sm:gap-6 md:gap-7 py-1">
+                  {/* AWS */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="AWS">
+                    <img src={awsLogo} alt="AWS" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
+                  </div>
+                  {/* Kubernetes */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Kubernetes">
+                    <img src={k8sLogo} alt="Kubernetes" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  </div>
+                  {/* Go */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Go (Golang)">
+                    <img src={goLogo} alt="Go" className="h-4.5 sm:h-6 md:h-7 w-auto object-contain" />
+                  </div>
+                  {/* Rust */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Rust">
+                    <img src={rustLogo} alt="Rust" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  </div>
+                  {/* React */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="React">
+                    <img src={reactLogo} alt="React" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  </div>
+                  {/* PostgreSQL */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="PostgreSQL">
+                    <img src={postgresLogo} alt="PostgreSQL" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  </div>
+                </div>
+
+                {/* Row 2: 5 Modern 3D Glass Tech Cards */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3">
+                  {/* TensorFlow */}
+                  <div className="glass-3d flex flex-col items-center justify-center w-[58px] xs:w-[68px] sm:w-[82px] h-[56px] xs:h-[66px] sm:h-[78px] rounded-xl hover:border-amber-400/50 transition-all duration-300 group">
+                    <img src={tfLogo} alt="TensorFlow" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
+                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">TensorFlow</span>
+                  </div>
+
+                  {/* PyTorch */}
+                  <div className="glass-3d flex flex-col items-center justify-center w-[58px] xs:w-[68px] sm:w-[82px] h-[56px] xs:h-[66px] sm:h-[78px] rounded-xl hover:border-red-400/50 transition-all duration-300 group">
+                    <img src={pytorchLogo} alt="PyTorch" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
+                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">PyTorch</span>
+                  </div>
+
+                  {/* Hugging Face */}
+                  <div className="glass-3d flex flex-col items-center justify-center w-[58px] xs:w-[68px] sm:w-[82px] h-[56px] xs:h-[66px] sm:h-[78px] rounded-xl hover:border-yellow-400/50 transition-all duration-300 group">
+                    <img src={huggingfaceLogo} alt="Hugging Face" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
+                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">Hugging Face</span>
+                  </div>
+
+                  {/* LangChain */}
+                  <div className="glass-3d flex flex-col items-center justify-center w-[58px] xs:w-[68px] sm:w-[82px] h-[56px] xs:h-[66px] sm:h-[78px] rounded-xl hover:border-emerald-400/50 transition-all duration-300 group">
+                    <img src={langchainLogo} alt="LangChain" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
+                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">LangChain</span>
+                  </div>
+
+                  {/* Vector DB */}
+                  <div className="glass-3d flex flex-col items-center justify-center w-[58px] xs:w-[68px] sm:w-[82px] h-[56px] xs:h-[66px] sm:h-[78px] rounded-xl hover:border-cyan-400/50 transition-all duration-300 group">
+                    <img src={vectordbLogo} alt="Vector DB" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
+                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">Vector DB</span>
+                  </div>
+                </div>
+
+                {/* Subtitle label */}
+                <p className="text-gray-400 text-xs sm:text-sm font-medium mt-1 tracking-wide">
+                  Technologies & Tools
+                </p>
+              </div>
+
+              {/* View My Projects Button (Matching Mockup's sleek bordered button style) */}
+              <div className="pt-1 sm:pt-2">
+                <a 
+                  href="#projects" 
+                  className="glass-3d inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-white text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105 hover:border-white/40"
+                >
+                  <span className="relative z-10">View My Projects</span>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Featured Projects Section (Horizontal Slider in Clean Dark 3D Glass Theme) */}
-        <div className="mt-12 sm:mt-16 md:mt-24 mb-16 sm:mb-20">
+        <div id="projects" className="mt-8 sm:mt-14 md:mt-20 mb-12 sm:mb-16">
           {/* Header row with Title and Single GET IN TOUCH Button */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 sm:mb-10 px-4 max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-10 px-2 sm:px-4 max-w-7xl mx-auto">
             <div>
-              <h2 className="text-white text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-center sm:text-left">
+              <h2 className="text-white text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-center sm:text-left">
                 Featured Projects
               </h2>
               <p className="text-gray-400 text-xs sm:text-sm mt-1 text-center sm:text-left">
