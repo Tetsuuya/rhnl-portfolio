@@ -144,8 +144,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       // Initialize big real snake in Hero section document coordinates starting off-screen left
       const heroHeight = Math.max(height, 700);
       const segments: SnakeSegment[] = [];
-      const numSegments = 22;
-      const startX = -200;
+      const numSegments = 28;
+      const startX = -260;
       const startY = heroHeight / 2;
       for (let i = 0; i < numSegments; i++) {
         segments.push({
@@ -162,7 +162,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
     const isMobileInitial = window.innerWidth < 768;
     // introPhase: 0 = running intro slither, 3 = finished & idle (0% CPU)
     let introPhase = isMobileInitial || !enableSnakeRef.current ? 3 : 0;
-    let introX = -200;
+    let introX = -260;
     let patrolIndex = 0;
     let wasEatingFood = false;
 
@@ -319,11 +319,11 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
           sTarget.y = targetY;
 
           // ZERO-LAG HARDWARE ACCELERATED GPU REVEAL:
-          // Translate the dark curtain layer to the snake's head x coordinate smoothly
+          // Translate the dark curtain layer slightly ahead of snake's head so nose is never cut
           const curtainEl = document.getElementById('snake-intro-curtain');
           if (curtainEl) {
             curtainEl.style.display = 'block';
-            curtainEl.style.transform = `translate3d(${segments[0].x}px, 0, 0)`;
+            curtainEl.style.transform = `translate3d(${segments[0].x + 35}px, 0, 0)`;
           }
 
           // Transition to Phase 3 (Complete Shutdown) once tail exits off-screen right
@@ -783,7 +783,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       const isSnakeVisible = introPhase === 0 && isSnakeActive && segments.some((seg) => {
         const sx = seg.x - scrollX;
         const sy = seg.y - scrollY;
-        return sx >= -150 && sx <= width + 150 && sy >= -150 && sy <= height + 150;
+        return sx >= -350 && sx <= width + 350 && sy >= -350 && sy <= height + 350;
       });
 
       if (segments.length > 0 && isHome && isSnakeVisible && isSnakeActive) {
@@ -829,17 +829,19 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
           const seg = segments[i];
 
           // Anatomically realistic python width profile: narrow neck, thick body, tapering tail
+          const totalSegs = segments.length;
+          const tailStart = Math.max(3, Math.floor(totalSegs * 0.55));
           let radius = 26.0 * snakeScale; // base thickness
           if (i === 0) {
             radius = 24.0 * snakeScale; // Head handled separately below (drawn as oval snout)
           } else if (i === 1 || i === 2) {
             radius = 20.0 * snakeScale; // Narrower neck
-          } else if (i > 2 && i < 22) {
+          } else if (i > 2 && i < tailStart) {
             radius = 29.0 * snakeScale; // Thick body
           } else {
-            // Taper tail down from 29.0px to 4.4px
-            const tailProgress = (i - 22) / (segments.length - 1 - 22);
-            radius = 29.0 * snakeScale * (1 - tailProgress * 0.85);
+            // Smooth natural taper to a sleek rounded point at the tail tip
+            const tailProgress = (i - tailStart) / Math.max(1, totalSegs - 1 - tailStart);
+            radius = Math.max(3.5, 29.0 * (1 - tailProgress * 0.88)) * snakeScale;
           }
 
           // Natural Emerald Tree Python Color Palette (Authentic biological python)
