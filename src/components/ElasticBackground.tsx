@@ -163,8 +163,6 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
     // introPhase: 0 = running intro slither, 3 = finished & idle (0% CPU)
     let introPhase = isMobileInitial || !enableSnakeRef.current ? 3 : 0;
     let introX = -260;
-    let patrolIndex = 0;
-    let wasEatingFood = false;
 
     // Lock page scroll for cinematic reveal only on desktop during intro
     if (introPhase === 0) {
@@ -219,6 +217,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       const hash = window.location.hash.slice(1) || 'home';
       const isHome = (currentViewRef.current === 'home' || currentViewRef.current === '') && (hash === 'home' || hash === '');
 
+      const curtainEl = document.getElementById('snake-intro-curtain');
+
       // If on mobile view or snake is disabled, ensure intro is skipped and body scroll is restored
       const isMobile = width < 768;
       const isSnakeActive = Boolean(enableSnakeRef.current) && !isMobile && introPhase === 0;
@@ -226,7 +226,6 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       if ((isMobile || !enableSnakeRef.current) && introPhase === 0) {
         introPhase = 3;
         document.body.style.overflow = '';
-        const curtainEl = document.getElementById('snake-intro-curtain');
         if (curtainEl) curtainEl.style.display = 'none';
       }
 
@@ -234,7 +233,6 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       if (!isHome && introPhase === 0) {
         introPhase = 3;
         document.body.style.overflow = '';
-        const curtainEl = document.getElementById('snake-intro-curtain');
         if (curtainEl) curtainEl.style.display = 'none';
       }
 
@@ -256,160 +254,28 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
       if (segments.length > 0 && isHome && introPhase === 0 && isSnakeActive) {
         const snakeScale = 1.0;
 
-        // Dynamic Hero Section Bounds for Perimeter Patrol
-        const heroEl = document.getElementById('hero-content');
-        let heroTop = 85;
-        let heroBottom = Math.max(heroHeight - 90, 680);
-        let heroLeft = Math.max(45, (width > 1360 ? (width - 1320) / 2 : 45));
-        let heroRight = Math.min(width - 45, (width > 1360 ? width - (width - 1320) / 2 : width - 45));
-
-        if (heroEl) {
-          const rect = heroEl.getBoundingClientRect();
-          const topDoc = rect.top + window.scrollY;
-          const bottomDoc = rect.bottom + window.scrollY;
-          const leftDoc = rect.left + window.scrollX;
-          const rightDoc = rect.right + window.scrollX;
-          if (bottomDoc > topDoc + 150 && rightDoc > leftDoc + 150) {
-            heroTop = Math.max(75, topDoc - 25);
-            heroBottom = bottomDoc + 25;
-            heroLeft = Math.max(35, leftDoc - 35);
-            heroRight = Math.min(width - 35, rightDoc + 35);
-          }
-        }
-
-        const midX = (heroLeft + heroRight) / 2;
-        const midY = (heroTop + heroBottom) / 2;
-        const corner = Math.min(90, (heroRight - heroLeft) * 0.12);
-
-        // 12-point perimeter track framing the hero perimeter clockwise
-        const waypoints = [
-          // Top edge (left to right)
-          { x: heroLeft + corner, y: heroTop },
-          { x: midX, y: heroTop - 5 },
-          { x: heroRight - corner, y: heroTop },
-
-          // Right edge (top to bottom)
-          { x: heroRight, y: heroTop + corner },
-          { x: heroRight + 5, y: midY },
-          { x: heroRight, y: heroBottom - corner },
-
-          // Bottom edge (right to left)
-          { x: heroRight - corner, y: heroBottom },
-          { x: midX, y: heroBottom + 5 },
-          { x: heroLeft + corner, y: heroBottom },
-
-          // Left edge (bottom to top)
-          { x: heroLeft, y: heroBottom - corner },
-          { x: heroLeft - 5, y: midY },
-          { x: heroLeft, y: heroTop + corner },
-        ];
-
-        // Settings for Hero section snake
-        let speed = 2.5 * snakeScale;
-        let slitherFreq = 0.07;
-        let slitherAmp = 9.5 * snakeScale;
-
-        const cursorDist = Math.sqrt((segments[0].x - mouseDocX) ** 2 + (segments[0].y - mouseDocY) ** 2);
-
         // Cinematic intro movement (Phase 0: Reveal from Left)
-        if (introPhase === 0) {
-          introX += 36.0;
-          const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 80;
-          sTarget.x = introX;
-          sTarget.y = targetY;
+        introX += 38.0;
+        const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 75;
+        sTarget.x = introX;
+        sTarget.y = targetY;
 
-          // ZERO-LAG HARDWARE ACCELERATED GPU REVEAL:
-          // Translate the dark curtain layer slightly ahead of snake's head so nose is never cut
-          const curtainEl = document.getElementById('snake-intro-curtain');
+        // ZERO-LAG HARDWARE ACCELERATED GPU REVEAL:
+        // Translate the dark curtain layer slightly ahead of snake's head so nose is never cut
+        if (curtainEl) {
+          curtainEl.style.display = 'block';
+          curtainEl.style.transform = `translate3d(${segments[0].x + 35}px, 0, 0)`;
+        }
+
+        // Transition to Phase 3 (Complete Shutdown) once tail exits off-screen right
+        const tail = segments[segments.length - 1];
+        if (tail.x > width + 120) {
+          introPhase = 3;
+          document.body.style.overflow = '';
           if (curtainEl) {
-            curtainEl.style.display = 'block';
-            curtainEl.style.transform = `translate3d(${segments[0].x + 35}px, 0, 0)`;
+            curtainEl.style.display = 'none';
           }
-
-          // Transition to Phase 3 (Complete Shutdown) once tail exits off-screen right
-          const tail = segments[segments.length - 1];
-          if (tail.x > width + 100) {
-            introPhase = 3;
-            document.body.style.overflow = '';
-            if (curtainEl) {
-              curtainEl.style.display = 'none';
-            }
-            fgCtx.clearRect(0, 0, width, height);
-          }
-        }
-
-        // Filter food strictly to Hero section bounds to ensure snake never targets food outside hero
-        if (heroEl) {
-          const rect = heroEl.getBoundingClientRect();
-          const topDoc = rect.top + window.scrollY - 50;
-          const bottomDoc = rect.bottom + window.scrollY + 50;
-          foodsRef.current = foodsRef.current.filter((food) => food.y >= topDoc && food.y <= bottomDoc);
-        }
-
-        // Search for closest food item if in wander phase (introPhase === 2)
-        let targetFood: FoodItem | null = null;
-        if (introPhase === 2 && foodsRef.current.length > 0) {
-          const head = segments[0];
-          let minDist = Infinity;
-          foodsRef.current.forEach((food) => {
-            const dx = food.x - head.x;
-            const dy = food.y - head.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < minDist) {
-              minDist = dist;
-              targetFood = food;
-            }
-          });
-        }
-
-        const margin = 80;
-
-        if (targetFood) {
-          // Food dropped (even in center): leave perimeter and rush straight to food!
-          wasEatingFood = true;
-          sTarget.x = (targetFood as FoodItem).x;
-          sTarget.y = (targetFood as FoodItem).y;
-          speed = 4.8 * snakeScale;
-          slitherFreq = 0.12;
-          slitherAmp = 13.0 * snakeScale;
-        } else if (introPhase === 2) {
-          // When all food is consumed, return directly to the nearest perimeter point around the hero!
-          if (wasEatingFood) {
-            let closestWpIdx = 0;
-            let minDist = Infinity;
-            waypoints.forEach((wp, idx) => {
-              const d = Math.hypot(segments[0].x - wp.x, segments[0].y - wp.y);
-              if (d < minDist) {
-                minDist = d;
-                closestWpIdx = idx;
-              }
-            });
-            patrolIndex = closestWpIdx;
-            wasEatingFood = false;
-          }
-
-          // Follow perimeter waypoint loop around the hero
-          const wp = waypoints[patrolIndex % waypoints.length];
-          const wave = Math.sin(frameCountRef.current * 0.05 + patrolIndex) * 6 * snakeScale;
-          sTarget.x = wp.x + (patrolIndex % 3 === 1 ? 0 : wave);
-          sTarget.y = wp.y + (patrolIndex % 3 === 1 ? wave : 0);
-
-          speed = 2.5 * snakeScale;
-          slitherFreq = 0.07;
-          slitherAmp = 9.5 * snakeScale;
-
-          // Check proximity to advance to next perimeter waypoint
-          const distToWp = Math.hypot(segments[0].x - wp.x, segments[0].y - wp.y);
-          if (distToWp < 75 * snakeScale) {
-            patrolIndex = (patrolIndex + 1) % waypoints.length;
-          }
-
-          // Playful hover interaction: if cursor approaches, snake dashes forward along its perimeter route
-          if (mouse.x > -500 && cursorDist < 120 && mouseDocY < heroBottom + 80) {
-            speed *= 1.75;
-            slitherFreq *= 1.4;
-            slitherAmp *= 1.3;
-          }
+          fgCtx.clearRect(0, 0, width, height);
         }
 
         // Head Movement
@@ -419,11 +285,9 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
 
         snakeAngle.current = Math.atan2(hdy, hdx);
 
-        // In intro phase 0 and 1, we want the snake to move faster to slither in/out nicely
-        const inIntro = (introPhase === 0 || introPhase === 1);
-        const currentSpeed = inIntro ? 34.0 * snakeScale : speed;
-        const currentSlitherFreq = inIntro ? 0.16 : slitherFreq;
-        const currentSlitherAmp = inIntro ? 12.0 * snakeScale : slitherAmp;
+        const currentSpeed = 34.0 * snakeScale;
+        const currentSlitherFreq = 0.16;
+        const currentSlitherAmp = 12.0 * snakeScale;
 
         // Add perpendicular slither waves to head
         const slitherVal = Math.sin(frameCountRef.current * currentSlitherFreq) * currentSlitherAmp;
@@ -433,13 +297,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
         segments[0].x += (hdx / hdist) * currentSpeed + perpX * 0.16;
         segments[0].y += (hdy / hdist) * currentSpeed + perpY * 0.16;
 
-        if (introPhase === 2) {
-          segments[0].x = Math.max(margin / 3, Math.min(width - margin / 3, segments[0].x));
-          segments[0].y = Math.max(margin / 3, Math.min(heroBottom + 60, segments[0].y));
-        }
-
         // Body Segments Spring Follow (Rubbery stretch dynamics)
-        const segmentSpacing = 18.4 * snakeScale; // tighter spacing for smooth python body curvature
+        const segmentSpacing = 18.4 * snakeScale;
         for (let i = 1; i < segments.length; i++) {
           const prev = segments[i - 1];
           const curr = segments[i];
@@ -451,92 +310,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
           // Position the segment exactly segmentSpacing behind previous segment
           curr.x = prev.x - (bdx / bdist) * segmentSpacing;
           curr.y = prev.y - (bdy / bdist) * segmentSpacing;
-
           curr.vx = 0;
           curr.vy = 0;
-
-          if (introPhase === 2) {
-            curr.x = Math.max(margin / 3, Math.min(width - margin / 3, curr.x));
-            curr.y = Math.max(margin / 3, Math.min(heroBottom + 60, curr.y));
-          }
-        }
-
-        // Elastic grid sheet deformation beneath snake segments (only when grid is enabled)
-        if (showGridRef.current) {
-          const deformingRadius = 65 * snakeScale;
-          segments.forEach((seg, sIdx) => {
-            if (sIdx % 2 !== 0) return;
-            const segDocX = seg.x;
-            const segDocY = seg.y;
-            const minC = Math.max(0, Math.floor((segDocX - deformingRadius) / spacing));
-            const maxC = Math.min(cols - 1, Math.ceil((segDocX + deformingRadius) / spacing));
-            const minNR = Math.max(0, Math.floor((segDocY - deformingRadius) / spacing));
-            const maxNR = Math.min(rows - 1, Math.ceil((segDocY + deformingRadius) / spacing));
-            for (let nr = minNR; nr <= maxNR; nr++) {
-              for (let nc = minC; nc <= maxC; nc++) {
-                const node = nodes[nr * cols + nc];
-                if (!node) continue;
-                const ndx = node.x - segDocX;
-                const ndy = node.y - segDocY;
-                const ndist = Math.sqrt(ndx * ndx + ndy * ndy) || 0.001;
-                if (ndist < deformingRadius) {
-                  const pushForce = (deformingRadius - ndist) * 0.015;
-                  node.vx += (ndx / ndist) * pushForce;
-                  node.vy += (ndy / ndist) * pushForce;
-                }
-              }
-            }
-          });
-        }
-
-        // Eating logic
-        if (targetFood) {
-          const head = segments[0];
-          const dx = (targetFood as FoodItem).x - head.x;
-          const dy = (targetFood as FoodItem).y - head.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 38 * snakeScale) {
-            const eatenId = (targetFood as FoodItem).id;
-            const eatenX = (targetFood as FoodItem).x;
-            const eatenY = (targetFood as FoodItem).y;
-
-            // Remove eaten food
-            foodsRef.current = foodsRef.current.filter((f) => f.id !== eatenId);
-
-            // Poke elastic background at food location
-            triggerPoke(eatenX, eatenY, 40);
-
-            // Append segment to tail to make snake grow
-            const tail = segments[segments.length - 1];
-            segments.push({
-              x: tail.x,
-              y: tail.y,
-              vx: 0,
-              vy: 0,
-            });
-            if (segments.length > 70) {
-              segments.pop();
-            }
-
-            // Spawn splash particles
-            const colors = ['#ec4899', '#06b6d4', '#eab308', '#ffffff'];
-            for (let p = 0; p < 12; p++) {
-              const angle = Math.random() * Math.PI * 2;
-              const speedVal = 2.0 + Math.random() * 4.5;
-              particlesRef.current.push({
-                x: eatenX,
-                y: eatenY,
-                vx: Math.cos(angle) * speedVal,
-                vy: Math.sin(angle) * speedVal,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                size: 2.5 + Math.random() * 3.5,
-                alpha: 1.0,
-                life: 0,
-                maxLife: 35 + Math.round(Math.random() * 20),
-              });
-            }
-          }
         }
       }
 
@@ -857,12 +632,11 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
 
           ctx.fillStyle = bodyColor;
           ctx.strokeStyle = bodyColor;
-          // Natural soft contact drop shadow (grounded, not glowing AI neon)
-          ctx.shadowBlur = i === 0 ? 10 * snakeScale : 5 * snakeScale;
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
 
           if (i === 0) {
             // Draw head snout as a beautiful python skull shape rotated to heading
+            ctx.shadowBlur = 8 * snakeScale;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
             ctx.save();
             ctx.translate(seg.x, seg.y);
             ctx.rotate(snakeAngle.current);
@@ -874,6 +648,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
             ctx.closePath();
             ctx.fill();
             ctx.restore();
+            ctx.shadowBlur = 0;
           } else {
             // Draw continuous body segment connected to the previous one to avoid the "throwball" separate-circle effect
             const prevSeg = segments[i - 1];
@@ -1052,10 +827,16 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
 
           return true;
         });
-      } else {
-        particlesRef.current = [];
       }
       ctx.globalAlpha = 1.0; // reset
+
+      // Auto shutdown RAF loop when intro finishes and grid is disabled for 0% CPU usage
+      if (introPhase === 3 && !showGridRef.current && particlesRef.current.length === 0 && foodsRef.current.length === 0) {
+        fgCtx.clearRect(0, 0, width, height);
+        bgCtx.clearRect(0, 0, width, height);
+        animationFrameRef.current = null;
+        return;
+      }
 
       animationFrameRef.current = requestAnimationFrame(update);
     };
