@@ -40,17 +40,35 @@ interface Particle {
 interface ElasticBackgroundProps {
   currentView?: string;
   showGrid?: boolean;
+  enableSnake?: boolean;
 }
 
-export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentView = 'home', showGrid = false }) => {
+export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
+  currentView = 'home',
+  showGrid = false,
+  enableSnake = true,
+}) => {
   const currentViewRef = useRef(currentView);
   const showGridRef = useRef(showGrid);
+  const enableSnakeRef = useRef(enableSnake);
+
   useEffect(() => {
     currentViewRef.current = currentView;
   }, [currentView]);
   useEffect(() => {
     showGridRef.current = showGrid;
   }, [showGrid]);
+  useEffect(() => {
+    enableSnakeRef.current = enableSnake;
+    if (!enableSnake) {
+      document.body.style.overflow = '';
+      window.dispatchEvent(
+        new CustomEvent('snake-intro', {
+          detail: { x: window.innerWidth, active: false },
+        })
+      );
+    }
+  }, [enableSnake]);
 
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const fgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -141,13 +159,19 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       snakeTarget.current = { x: startX, y: startY };
     };
 
-    let introPhase = 0; // 0: reveal from left, 1: re-enter from right, 2: normal background
+    const isMobileInitial = window.innerWidth < 768;
+    // introPhase: 0 = running intro slither, 3 = finished & idle (0% CPU)
+    let introPhase = isMobileInitial || !enableSnakeRef.current ? 3 : 0;
     let introX = -350;
     let patrolIndex = 0;
     let wasEatingFood = false;
 
-    // Lock page scroll for cinematic reveal
-    document.body.style.overflow = 'hidden';
+    // Lock page scroll for cinematic reveal only on desktop during intro
+    if (introPhase === 0) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
 
     initGrid();
 
@@ -195,31 +219,42 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       const hash = window.location.hash.slice(1) || 'home';
       const isHome = (currentViewRef.current === 'home' || currentViewRef.current === '') && (hash === 'home' || hash === '');
 
-      // If navigated away from home during intro, unlock scroll immediately
-      if (!isHome && introPhase === 0) {
-        introPhase = 2;
+      // If on mobile view or snake is disabled, ensure intro is skipped and body scroll is restored
+      const isMobile = width < 768;
+      const isSnakeActive = Boolean(enableSnakeRef.current) && !isMobile && introPhase === 0;
+
+      if ((isMobile || !enableSnakeRef.current) && introPhase === 0) {
+        introPhase = 3;
         document.body.style.overflow = '';
+        const curtainEl = document.getElementById('snake-intro-curtain');
+        if (curtainEl) curtainEl.style.display = 'none';
       }
 
-      // Expose mouse, snake, and grid data globally for card component deformations (Tilt3D)
-      // Throttled to every 3 frames to reduce object allocation churn
+      // If navigated away from home during intro, unlock scroll immediately
+      if (!isHome && introPhase === 0) {
+        introPhase = 3;
+        document.body.style.overflow = '';
+        const curtainEl = document.getElementById('snake-intro-curtain');
+        if (curtainEl) curtainEl.style.display = 'none';
+      }
+
+      // Expose mouse and grid data
       if (typeof window !== 'undefined' && frameCountRef.current % 3 === 0) {
         (window as any).__mouseData = {
           x: mouse.x,
           y: mouse.y,
           isDown: mouse.isDown
         };
-        (window as any).__snakeSegments = isHome ? segments : [];
+        (window as any).__snakeSegments = isSnakeActive ? segments : [];
         (window as any).__gridNodes = nodes;
         (window as any).__gridCols = cols;
         (window as any).__gridRows = rows;
         (window as any).__gridSpacing = spacing;
       }
 
-      // --- 1. SNAKE PHYSICS LOGIC (Anchored exclusively to Home Hero Section) ---
-      if (segments.length > 0 && isHome) {
-        const isMobile = width < 768;
-        const snakeScale = isMobile ? 0.6 : 1.0;
+      // --- 1. SNAKE INTRO PHYSICS LOGIC (Zero-Lag Cinematic Slither) ---
+      if (segments.length > 0 && isHome && introPhase === 0 && isSnakeActive) {
+        const snakeScale = 1.0;
 
         // Dynamic Hero Section Bounds for Perimeter Patrol
         const heroEl = document.getElementById('hero-content');
@@ -276,51 +311,30 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
 
         const cursorDist = Math.sqrt((segments[0].x - mouseDocX) ** 2 + (segments[0].y - mouseDocY) ** 2);
 
-        // Handle cinematic intro movement (Phase 0: Reveal from Left)
+        // Cinematic intro movement (Phase 0: Reveal from Left)
         if (introPhase === 0) {
-          introX += 13.5;
-          const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 150;
+          introX += 17.0;
+          const targetY = heroHeight / 2 + Math.sin(introX * 0.005) * 110;
           sTarget.x = introX;
           sTarget.y = targetY;
 
-          // Dispatch current head coordinate to trigger clip-path reveal (throttled to every 2 frames)
-          if (frameCountRef.current % 2 === 0) {
-            window.dispatchEvent(
-              new CustomEvent('snake-intro', {
-                detail: { x: segments[0].x, active: true },
-              })
-            );
+          // ZERO-LAG HARDWARE ACCELERATED GPU REVEAL:
+          // Translate the dark curtain layer to the snake's head x coordinate smoothly
+          const curtainEl = document.getElementById('snake-intro-curtain');
+          if (curtainEl) {
+            curtainEl.style.display = 'block';
+            curtainEl.style.transform = `translate3d(${segments[0].x}px, 0, 0)`;
           }
 
-          // Transition to Phase 1 once tail exits off-screen right
+          // Transition to Phase 3 (Complete Shutdown) once tail exits off-screen right
           const tail = segments[segments.length - 1];
-          if (tail.x > width + 150) {
-            introPhase = 1;
+          if (tail.x > width + 100) {
+            introPhase = 3;
             document.body.style.overflow = '';
-            window.dispatchEvent(
-              new CustomEvent('snake-intro', {
-                detail: { x: width, active: false },
-              })
-            );
-            // Spawn the head target near the right edge to steer the snake back on-screen
-            sTarget.x = width - 150;
-            sTarget.y = midY;
-          }
-        } else if (introPhase === 1) {
-          // Phase 1: Re-enter from the right into the Hero section
-          if (segments[0].x <= width - 140) {
-            introPhase = 2;
-            // Pick closest perimeter waypoint so it immediately starts crawling around hero
-            let closestWpIdx = 0;
-            let minDist = Infinity;
-            waypoints.forEach((wp, idx) => {
-              const d = Math.hypot(segments[0].x - wp.x, segments[0].y - wp.y);
-              if (d < minDist) {
-                minDist = d;
-                closestWpIdx = idx;
-              }
-            });
-            patrolIndex = closestWpIdx;
+            if (curtainEl) {
+              curtainEl.style.display = 'none';
+            }
+            fgCtx.clearRect(0, 0, width, height);
           }
         }
 
@@ -447,32 +461,33 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
           }
         }
 
-        // Elastic grid sheet deformation beneath snake segments (in Hero section document coordinates)
-        // Grid-indexed spatial lookup: O(~25 cells) instead of O(n) full node scan
-        const deformingRadius = 65 * snakeScale;
-        segments.forEach((seg, sIdx) => {
-          if (sIdx % 2 !== 0) return; // limit grid physics pokes to improve performance
-          const segDocX = seg.x;
-          const segDocY = seg.y;
-          const minC = Math.max(0, Math.floor((segDocX - deformingRadius) / spacing));
-          const maxC = Math.min(cols - 1, Math.ceil((segDocX + deformingRadius) / spacing));
-          const minNR = Math.max(0, Math.floor((segDocY - deformingRadius) / spacing));
-          const maxNR = Math.min(rows - 1, Math.ceil((segDocY + deformingRadius) / spacing));
-          for (let nr = minNR; nr <= maxNR; nr++) {
-            for (let nc = minC; nc <= maxC; nc++) {
-              const node = nodes[nr * cols + nc];
-              if (!node) continue;
-              const ndx = node.x - segDocX;
-              const ndy = node.y - segDocY;
-              const ndist = Math.sqrt(ndx * ndx + ndy * ndy) || 0.001;
-              if (ndist < deformingRadius) {
-                const pushForce = (deformingRadius - ndist) * 0.015;
-                node.vx += (ndx / ndist) * pushForce;
-                node.vy += (ndy / ndist) * pushForce;
+        // Elastic grid sheet deformation beneath snake segments (only when grid is enabled)
+        if (showGridRef.current) {
+          const deformingRadius = 65 * snakeScale;
+          segments.forEach((seg, sIdx) => {
+            if (sIdx % 2 !== 0) return;
+            const segDocX = seg.x;
+            const segDocY = seg.y;
+            const minC = Math.max(0, Math.floor((segDocX - deformingRadius) / spacing));
+            const maxC = Math.min(cols - 1, Math.ceil((segDocX + deformingRadius) / spacing));
+            const minNR = Math.max(0, Math.floor((segDocY - deformingRadius) / spacing));
+            const maxNR = Math.min(rows - 1, Math.ceil((segDocY + deformingRadius) / spacing));
+            for (let nr = minNR; nr <= maxNR; nr++) {
+              for (let nc = minC; nc <= maxC; nc++) {
+                const node = nodes[nr * cols + nc];
+                if (!node) continue;
+                const ndx = node.x - segDocX;
+                const ndy = node.y - segDocY;
+                const ndist = Math.sqrt(ndx * ndx + ndy * ndy) || 0.001;
+                if (ndist < deformingRadius) {
+                  const pushForce = (deformingRadius - ndist) * 0.015;
+                  node.vx += (ndx / ndist) * pushForce;
+                  node.vy += (ndy / ndist) * pushForce;
+                }
               }
             }
-          }
-        });
+          });
+        }
 
         // Eating logic
         if (targetFood) {
@@ -525,106 +540,88 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
         }
       }
 
-      // --- 2. GRID SPRING PHYSICS UPDATE ---
-      // Viewport-culled: only run full physics on nodes in the visible area + buffer.
-      // Off-screen nodes are snapped to rest so they don't accumulate displacement.
-      const physBuffer = spacing * 3;
-      const physMinRow = Math.max(0, Math.floor((scrollY - physBuffer) / spacing));
-      const physMaxRow = Math.min(rows - 1, Math.ceil((scrollY + height + physBuffer) / spacing));
-      const hoverActive = mouse.x > -500;
+      // --- 2. GRID SPRING PHYSICS UPDATE (Bypassed completely when grid is disabled for max 120 FPS performance) ---
+      if (showGridRef.current) {
+        const physBuffer = spacing * 3;
+        const physMinRow = Math.max(0, Math.floor((scrollY - physBuffer) / spacing));
+        const physMaxRow = Math.min(rows - 1, Math.ceil((scrollY + height + physBuffer) / spacing));
+        const hoverActive = mouse.x > -500;
 
-      // Snap off-screen rows to rest (prevents displaced grid on scroll)
-      for (let r = 0; r < physMinRow; r++) {
-        for (let c = 0; c < cols; c++) {
-          const node = nodes[r * cols + c];
-          if (node) { node.x = node.ox; node.y = node.oy; node.vx = 0; node.vy = 0; }
-        }
-      }
-      for (let r = physMaxRow + 1; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const node = nodes[r * cols + c];
-          if (node) { node.x = node.ox; node.y = node.oy; node.vx = 0; node.vy = 0; }
-        }
-      }
+        for (let r = physMinRow; r <= physMaxRow; r++) {
+          for (let c = 0; c < cols; c++) {
+            const idx = r * cols + c;
+            const node = nodes[idx];
+            if (!node) continue;
 
-      for (let r = physMinRow; r <= physMaxRow; r++) {
-        for (let c = 0; c < cols; c++) {
-          const idx = r * cols + c;
-          const node = nodes[idx];
-          if (!node) continue;
+            if (node.pinned) {
+              node.x = mouse.x + scrollX;
+              node.y = mouse.y + scrollY;
+              node.vx = 0;
+              node.vy = 0;
+              continue;
+            }
 
-          if (node.pinned) {
-            node.x = mouse.x + scrollX;
-            node.y = mouse.y + scrollY;
-            node.vx = 0;
-            node.vy = 0;
-            continue;
-          }
+            let ax = 0;
+            let ay = 0;
 
-          let ax = 0;
-          let ay = 0;
+            ax += (node.ox - node.x) * stiffnessAnchor;
+            ay += (node.oy - node.y) * stiffnessAnchor;
 
-          // Anchor spring: Pull back to origin position (ox, oy)
-          ax += (node.ox - node.x) * stiffnessAnchor;
-          ay += (node.oy - node.y) * stiffnessAnchor;
-
-          // Neighbor springs (Left, Right, Up, Down)
-          if (c > 0) {
-            const left = nodes[idx - 1];
-            const dx = left.x - node.x;
-            const dy = left.y - node.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-            const force = (dist - spacing) * stiffnessNeighbor;
-            ax += (dx / dist) * force;
-            ay += (dy / dist) * force;
-          }
-          if (c < cols - 1) {
-            const right = nodes[idx + 1];
-            const dx = right.x - node.x;
-            const dy = right.y - node.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-            const force = (dist - spacing) * stiffnessNeighbor;
-            ax += (dx / dist) * force;
-            ay += (dy / dist) * force;
-          }
-          if (r > 0) {
-            const up = nodes[idx - cols];
-            const dx = up.x - node.x;
-            const dy = up.y - node.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-            const force = (dist - spacing) * stiffnessNeighbor;
-            ax += (dx / dist) * force;
-            ay += (dy / dist) * force;
-          }
-          if (r < rows - 1) {
-            const down = nodes[idx + cols];
-            const dx = down.x - node.x;
-            const dy = down.y - node.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-            const force = (dist - spacing) * stiffnessNeighbor;
-            ax += (dx / dist) * force;
-            ay += (dy / dist) * force;
-          }
-
-          // Hover repulsion: bbox pre-check skips sqrt for distant nodes
-          if (hoverActive) {
-            const dx = node.x - mouseDocX;
-            const dy = node.y - mouseDocY;
-            if (Math.abs(dx) < hoverRadius && Math.abs(dy) < hoverRadius) {
+            if (c > 0) {
+              const left = nodes[idx - 1];
+              const dx = left.x - node.x;
+              const dy = left.y - node.y;
               const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
-              if (dist < hoverRadius) {
-                const push = (hoverRadius - dist) * hoverForce;
-                ax += (dx / dist) * push;
-                ay += (dy / dist) * push;
+              const force = (dist - spacing) * stiffnessNeighbor;
+              ax += (dx / dist) * force;
+              ay += (dy / dist) * force;
+            }
+            if (c < cols - 1) {
+              const right = nodes[idx + 1];
+              const dx = right.x - node.x;
+              const dy = right.y - node.y;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+              const force = (dist - spacing) * stiffnessNeighbor;
+              ax += (dx / dist) * force;
+              ay += (dy / dist) * force;
+            }
+            if (r > 0) {
+              const up = nodes[idx - cols];
+              const dx = up.x - node.x;
+              const dy = up.y - node.y;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+              const force = (dist - spacing) * stiffnessNeighbor;
+              ax += (dx / dist) * force;
+              ay += (dy / dist) * force;
+            }
+            if (r < rows - 1) {
+              const down = nodes[idx + cols];
+              const dx = down.x - node.x;
+              const dy = down.y - node.y;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+              const force = (dist - spacing) * stiffnessNeighbor;
+              ax += (dx / dist) * force;
+              ay += (dy / dist) * force;
+            }
+
+            if (hoverActive) {
+              const dx = node.x - mouseDocX;
+              const dy = node.y - mouseDocY;
+              if (Math.abs(dx) < hoverRadius && Math.abs(dy) < hoverRadius) {
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+                if (dist < hoverRadius) {
+                  const push = (hoverRadius - dist) * hoverForce;
+                  ax += (dx / dist) * push;
+                  ay += (dy / dist) * push;
+                }
               }
             }
-          }
 
-          // Apply forces with damping
-          node.vx = (node.vx + ax) * damping;
-          node.vy = (node.vy + ay) * damping;
-          node.x += node.vx;
-          node.y += node.vy;
+            node.vx = (node.vx + ax) * damping;
+            node.vy = (node.vy + ay) * damping;
+            node.x += node.vx;
+            node.y += node.vy;
+          }
         }
       }
 
@@ -782,21 +779,20 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       // Clear foreground canvas (transparent background)
       fgCtx.clearRect(0, 0, width, height);
 
-      // --- 4. DRAW BIG REAL SNAKE (Offset by scroll position, strictly Home tab only) ---
-      const isSnakeVisible = segments.some((seg) => {
+      // --- 4. DRAW BIG REAL SNAKE (Only during Intro Phase 0, then shuts down completely) ---
+      const isSnakeVisible = introPhase === 0 && isSnakeActive && segments.some((seg) => {
         const sx = seg.x - scrollX;
         const sy = seg.y - scrollY;
         return sx >= -150 && sx <= width + 150 && sy >= -150 && sy <= height + 150;
       });
 
-      if (segments.length > 0 && isHome && isSnakeVisible) {
+      if (segments.length > 0 && isHome && isSnakeVisible && isSnakeActive) {
         // Switch drawing context to foreground canvas for the snake
         ctx = fgCtx;
         ctx.save();
         ctx.translate(-scrollX, -scrollY);
 
-        const isMobile = width < 768;
-        const snakeScale = isMobile ? 0.6 : 1.0;
+        const snakeScale = 1.0;
 
         // Flicking red fork-tongue logic
         const tongueCycle = frameCountRef.current % 110;
@@ -978,8 +974,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
         ctx.restore();
       }
 
-      // --- 5. DRAW FOOD ITEMS (Home tab only) ---
-      if (isHome) {
+      // --- 5. DRAW FOOD ITEMS (Desktop Home tab only) ---
+      if (isHome && isSnakeActive) {
         foodsRef.current.forEach((food) => {
           const foodScreenX = food.x - scrollX;
           const foodScreenY = food.y - scrollY;
@@ -1028,31 +1024,35 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       }
 
       // --- 6. UPDATE & DRAW PARTICLES ---
-      particlesRef.current = particlesRef.current.filter((p) => {
-        p.life++;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.96;
-        p.vy *= 0.96;
-        p.alpha = 1.0 - p.life / p.maxLife;
+      if (isSnakeActive) {
+        particlesRef.current = particlesRef.current.filter((p) => {
+          p.life++;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.96;
+          p.vy *= 0.96;
+          p.alpha = 1.0 - p.life / p.maxLife;
 
-        if (p.life >= p.maxLife) return false;
+          if (p.life >= p.maxLife) return false;
 
-        const screenX = p.x - scrollX;
-        const screenY = p.y - scrollY;
+          const screenX = p.x - scrollX;
+          const screenY = p.y - scrollY;
 
-        ctx.save();
-        ctx.fillStyle = p.color;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = p.color;
-        ctx.globalAlpha = p.alpha;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+          ctx.save();
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
 
-        return true;
-      });
+          return true;
+        });
+      } else {
+        particlesRef.current = [];
+      }
       ctx.globalAlpha = 1.0; // reset
 
       animationFrameRef.current = requestAnimationFrame(update);
@@ -1062,8 +1062,8 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
 
     // Event Handlers for Pointer Interaction
     const handlePointerDown = (e: PointerEvent) => {
-      // Disable background interaction on mobile touch pointer types
-      if (e.pointerType === 'touch') return;
+      // Disable background interaction on mobile touch pointer types or mobile viewport
+      if (e.pointerType === 'touch' || window.innerWidth < 768) return;
 
       const target = e.target as HTMLElement;
       
@@ -1118,9 +1118,10 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
       // Soft indentation impulse at click point (in document coordinates)
       triggerPoke(clickDocX, clickDocY, 14);
 
-      // Spawn a food item at the clicked document coordinates (Strictly Hero section on Home tab only)
+      // Spawn a food item at the clicked document coordinates (Strictly Hero section on Desktop Home tab only)
+      const isMobileClick = window.innerWidth < 768;
       const currentHash = window.location.hash.slice(1) || 'home';
-      const isClickHome = (currentViewRef.current === 'home' || currentViewRef.current === '') && (currentHash === 'home' || currentHash === '');
+      const isClickHome = Boolean(enableSnakeRef.current) && !isMobileClick && (currentViewRef.current === 'home' || currentViewRef.current === '') && (currentHash === 'home' || currentHash === '');
 
       if (isClickHome) {
         // Enforce that food can ONLY be placed inside the Hero section
@@ -1187,6 +1188,9 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
     };
 
     const handleResize = () => {
+      if (window.innerWidth < 768) {
+        document.body.style.overflow = '';
+      }
       initGrid();
     };
 
@@ -1210,6 +1214,22 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
 
   return (
     <>
+      {/* Zero-Lag GPU Curtain Layer for Snake Reveal */}
+      <div
+        id="snake-intro-curtain"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#07080c',
+          zIndex: 40,
+          pointerEvents: 'none',
+          willChange: 'transform',
+          display: 'none',
+        }}
+      />
       {/* Background Canvas (Grid, lights, black fill) */}
       <canvas
         ref={bgCanvasRef}
@@ -1233,7 +1253,7 @@ export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({ currentVie
           width: '100%',
           height: '100%',
           zIndex: 9999,
-          pointerEvents: 'none', // click through to interact with underlying elements
+          pointerEvents: 'none',
         }}
       />
     </>

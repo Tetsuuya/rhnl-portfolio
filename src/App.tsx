@@ -14,30 +14,6 @@ import './App.css';
 function App() {
   const [currentView, setCurrentView] = useState<string>('home');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [introX, setIntroX] = useState<number>(0);
-  const [introActive, setIntroActive] = useState<boolean>(true);
-  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
-
-  // Subscribe to snake intro reveal events and window resize
-  useEffect(() => {
-    const handleIntro = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setIntroX(customEvent.detail.x);
-      setIntroActive(customEvent.detail.active);
-    };
-
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener('snake-intro', handleIntro);
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('snake-intro', handleIntro);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -83,13 +59,13 @@ function App() {
       {/* Sleek Minimal Ambient Glow Background */}
       <AmbientBackground />
 
-      {/* Snake Companion (Grid disabled, snake and food active on Home) */}
-      <ElasticBackground currentView={currentView} showGrid={false} />
+      {/* Snake Cinematic Intro Engine (Runs intro on desktop, then shuts down for 0% CPU) */}
+      <ElasticBackground currentView={currentView} showGrid={false} enableSnake={true} />
 
-      {/* Page Content Wrapper (unfolds left-to-right as snake slithers in on home) */}
+      {/* Page Content Wrapper (Direct DOM clip-path reveal during snake intro) */}
       <div
+        id="page-content-wrapper"
         style={{
-          clipPath: (currentView === 'home' && introActive) ? `inset(0 ${Math.max(0, windowWidth - introX)}px 0 0)` : 'none',
           width: '100%',
           minHeight: '100vh',
           display: 'flex',

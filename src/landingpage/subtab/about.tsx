@@ -50,6 +50,9 @@ const About = () => {
                   <img 
                     src={profilePicture} 
                     alt="Rhenel" 
+                    fetchPriority="high"
+                    loading="eager"
+                    decoding="sync"
                     className="w-full h-full rounded-xl object-cover object-center sepia-[0.25] saturate-[0.88] contrast-[1.12] brightness-[0.96]"
                   />
                   <div className="absolute inset-2 pointer-events-none rounded-xl bg-radial from-transparent via-transparent to-black/40 mix-blend-multiply" />

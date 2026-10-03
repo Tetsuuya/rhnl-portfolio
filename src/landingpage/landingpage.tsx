@@ -195,6 +195,9 @@ const LandingPage = () => {
                   <img 
                     src={profilePicture} 
                     alt="Rhenel" 
+                    fetchPriority="high"
+                    loading="eager"
+                    decoding="sync"
                     className="w-full h-full object-cover object-center pointer-events-none relative z-10 sepia-[0.25] saturate-[0.88] contrast-[1.12] brightness-[0.96]"
                     draggable={false}
                   />
@@ -286,6 +289,8 @@ const LandingPage = () => {
                               <img
                                 src={repo.image}
                                 alt={repo.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 style={{ objectPosition: repo.image_position || 'center center' }}
                                 draggable={false}

@@ -18,7 +18,30 @@ const AdminPage = () => {
   const [authLoading, setAuthLoading] = useState<boolean>(false);
 
   // Tab switcher state
-  const [activeTab, setActiveTab] = useState<'projects' | 'tech_stack' | 'experience'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'tech_stack' | 'experience' | 'settings'>('projects');
+
+  // Performance & Settings state
+  const [snakeEnabled, setSnakeEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('portfolio_enable_hero_snake') === 'true';
+    }
+    return false;
+  });
+
+  const handleToggleSnake = (enabled: boolean) => {
+    setSnakeEnabled(enabled);
+    localStorage.setItem('portfolio_enable_hero_snake', String(enabled));
+    window.dispatchEvent(
+      new CustomEvent('snake-toggle', {
+        detail: { enabled },
+      })
+    );
+    showToast(
+      enabled
+        ? '🐍 Hero Snake animation enabled!'
+        : '⚡ Hero Snake disabled (Maximum Performance mode active)'
+    );
+  };
 
   // Projects states
   const [projects, setProjects] = useState<Project[]>([]);
@@ -757,6 +780,16 @@ const AdminPage = () => {
         >
           Experience
         </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`pb-3 text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+            activeTab === 'settings'
+              ? 'text-pink-300 border-b-2 border-pink-400'
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          ⚙️ Settings & Performance
+        </button>
       </div>
 
       {/* Stats dashboard */}
@@ -785,7 +818,7 @@ const AdminPage = () => {
               <div className="text-3xl font-extrabold text-pink-300 mt-1">5 Types</div>
             </div>
           </>
-        ) : (
+        ) : activeTab === 'experience' ? (
           <>
             <div className="bg-black/30 border-2 border-white/15 p-5 rounded-xl backdrop-blur-sm">
               <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Experience</div>
@@ -795,6 +828,21 @@ const AdminPage = () => {
               <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Active Roles</div>
               <div className="text-3xl font-extrabold text-pink-300 mt-1">
                 {experienceItems.filter((e) => e.duration.toLowerCase().includes('present')).length} Active
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-black/30 border-2 border-white/15 p-5 rounded-xl backdrop-blur-sm">
+              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Hero Snake Status</div>
+              <div className={`text-2xl font-extrabold mt-1 ${snakeEnabled ? 'text-green-400' : 'text-amber-400'}`}>
+                {snakeEnabled ? 'Active (Desktop)' : 'Disabled (0% CPU)'}
+              </div>
+            </div>
+            <div className="bg-black/30 border-2 border-white/15 p-5 rounded-xl backdrop-blur-sm">
+              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Scroll Mode</div>
+              <div className="text-2xl font-extrabold text-pink-300 mt-1">
+                {snakeEnabled ? 'Dynamic Animation' : 'Featherweight Native'}
               </div>
             </div>
           </>
@@ -980,7 +1028,7 @@ const AdminPage = () => {
               </table>
             </div>
           )
-        ) : (
+        ) : activeTab === 'experience' ? (
           loading && experienceItems.length === 0 ? (
             <div className="flex flex-col items-center py-20 gap-4">
               <div className="w-10 h-10 border-4 border-transparent border-t-pink-400 border-pink-400/20 rounded-full animate-spin"></div>
@@ -1045,6 +1093,88 @@ const AdminPage = () => {
               </table>
             </div>
           )
+        ) : (
+          /* Settings & Performance Tab */
+          <div className="p-6 sm:p-8 space-y-6">
+            <div className="border-b border-white/10 pb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <span>⚡</span> Performance & Animation Preferences
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                Configure visual animations and background physics across the portfolio.
+              </p>
+            </div>
+
+            {/* Snake Toggle Setting Card */}
+            <div className="bg-white/5 border border-white/10 hover:border-white/20 rounded-xl p-5 sm:p-6 transition-all duration-200">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-2xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🐍</span>
+                    <h3 className="text-base font-bold text-white">
+                      Hero Snake Companion & Slither Reveal
+                    </h3>
+                    <span
+                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                        snakeEnabled
+                          ? 'bg-green-950/60 border-green-500/40 text-green-300'
+                          : 'bg-amber-950/60 border-amber-500/40 text-amber-300'
+                      }`}
+                    >
+                      {snakeEnabled ? 'Active' : 'Disabled'}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                    Controls the animated python slithering around the Hero perimeter on Desktop and the cinematic reveal wipe.
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-2 text-[11px] text-gray-400">
+                    <span className="bg-black/40 border border-white/10 px-2 py-1 rounded">
+                      ⚡ When disabled: <strong className="text-cyan-300">0% CPU/GPU overhead</strong> &amp; 100% native smooth scrolling
+                    </span>
+                    <span className="bg-black/40 border border-white/10 px-2 py-1 rounded">
+                      📱 Mobile View: <strong className="text-gray-200">Always disabled automatically</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Custom Interactive Switch */}
+                <div className="flex items-center gap-3 self-end sm:self-center">
+                  <span className="text-xs font-semibold text-gray-400">
+                    {snakeEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={snakeEnabled}
+                    onClick={() => handleToggleSnake(!snakeEnabled)}
+                    className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-neutral-900 ${
+                      snakeEnabled ? 'bg-pink-600' : 'bg-white/20'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        snakeEnabled ? 'translate-x-7' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Link Card */}
+            <div className="bg-cyan-950/20 border border-cyan-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="text-xs text-cyan-200">
+                Changes apply instantly across your current session and are saved in local settings.
+              </div>
+              <a
+                href="#home"
+                className="px-3.5 py-1.5 text-xs font-semibold text-cyan-200 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/40 rounded-lg transition-all"
+              >
+                Go to Home &rarr;
+              </a>
+            </div>
+          </div>
         )}
       </div>
 
