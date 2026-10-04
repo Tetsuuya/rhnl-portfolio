@@ -46,7 +46,7 @@ interface ElasticBackgroundProps {
 export const ElasticBackground: React.FC<ElasticBackgroundProps> = ({
   currentView = 'home',
   showGrid = false,
-  enableSnake = true,
+  enableSnake = false,
 }) => {
   const currentViewRef = useRef(currentView);
   const showGridRef = useRef(showGrid);

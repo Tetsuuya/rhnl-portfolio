@@ -1,16 +1,16 @@
 import { useRef, useState, useEffect } from 'react';
 import profilePicture from '../assets/Gemini_Generated_Image_nwsi8fnwsi8fnwsi.jpeg';
 import awsLogo from '../assets/tech-logos/amazonwebservices.svg';
-import k8sLogo from '../assets/tech-logos/kubernetes.svg';
-import goLogo from '../assets/tech-logos/go.svg';
-import rustLogo from '../assets/tech-logos/rust.svg';
+import azureLogo from '../assets/tech-logos/azure.svg';
+import dockerLogo from '../assets/tech-logos/docker.svg';
+import cloudflareLogo from '../assets/tech-logos/cloudflare.svg';
 import reactLogo from '../assets/tech-logos/react.svg';
+import mysqlLogo from '../assets/tech-logos/mysql.svg';
 import postgresLogo from '../assets/tech-logos/postgresql.svg';
 import tfLogo from '../assets/tech-logos/tensorflow.svg';
 import pytorchLogo from '../assets/tech-logos/pytorch.svg';
 import huggingfaceLogo from '../assets/tech-logos/huggingface.svg';
 import langchainLogo from '../assets/tech-logos/langchain.svg';
-import vectordbLogo from '../assets/tech-logos/vectordb.svg';
 import { useFeaturedRepos } from '../hooks/useFeaturedRepos';
 import { useTechStack } from '../hooks/useTechStack';
 import { useExperience } from '../hooks/useExperience';
@@ -22,9 +22,10 @@ const LandingPage = () => {
   const [selectedExpId, setSelectedExpId] = useState<number | null>(null);
   const [emailCopied, setEmailCopied] = useState<boolean>(false);
 
-  // Scroll-Linked Curtain Fill State
+  // Scroll-Linked Curtain Fill State (Direct DOM manipulation for 0 React re-renders on scroll)
   const buildSectionRef = useRef<HTMLElement>(null);
-  const [curtainProgress, setCurtainProgress] = useState<number>(0);
+  const curtainLayerRef = useRef<HTMLDivElement>(null);
+  const curtainBeamRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let ticking = false;
@@ -32,7 +33,7 @@ const LandingPage = () => {
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          if (buildSectionRef.current) {
+          if (buildSectionRef.current && curtainLayerRef.current && curtainBeamRef.current) {
             const rect = buildSectionRef.current.getBoundingClientRect();
             const vh = window.innerHeight;
             // Curtain starts filling from bottom when section top touches vh * 0.95
@@ -41,7 +42,11 @@ const LandingPage = () => {
             const end = vh * 0.25;
             const rawProgress = (start - rect.top) / (start - end);
             const progress = Math.min(Math.max(rawProgress, 0), 1);
-            setCurtainProgress(progress);
+            
+            const insetVal = (1 - progress) * 100;
+            curtainLayerRef.current.style.clipPath = `inset(${insetVal}% 0 0 0)`;
+            curtainBeamRef.current.style.top = `${insetVal}%`;
+            curtainBeamRef.current.style.opacity = progress > 0.02 && progress < 0.98 ? '1' : '0';
           }
           ticking = false;
         });
@@ -143,25 +148,25 @@ const LandingPage = () => {
                   <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="AWS">
                     <img src={awsLogo} alt="AWS" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
                   </div>
-                  {/* Kubernetes */}
-                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Kubernetes">
-                    <img src={k8sLogo} alt="Kubernetes" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  {/* Azure */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Microsoft Azure">
+                    <img src={azureLogo} alt="Azure" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
                   </div>
-                  {/* Go */}
-                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Go (Golang)">
-                    <img src={goLogo} alt="Go" className="h-4.5 sm:h-6 md:h-7 w-auto object-contain" />
+                  {/* Docker */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Docker">
+                    <img src={dockerLogo} alt="Docker" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
                   </div>
-                  {/* Rust */}
-                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Rust">
-                    <img src={rustLogo} alt="Rust" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  {/* Cloudflare */}
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="Cloudflare">
+                    <img src={cloudflareLogo} alt="Cloudflare" className="h-5 sm:h-6 md:h-7 w-auto object-contain" />
                   </div>
                   {/* React */}
                   <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="React">
                     <img src={reactLogo} alt="React" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
                   </div>
                   {/* PostgreSQL */}
-                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="PostgreSQL">
-                    <img src={postgresLogo} alt="PostgreSQL" className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 object-contain" />
+                  <div className="flex items-center justify-center h-6 sm:h-8 transition-transform duration-300 hover:scale-110" title="MySQL">
+                    <img src={mysqlLogo} alt="MySQL" className="h-5 sm:h-7 md:h-8 w-auto object-contain" />
                   </div>
                 </div>
 
@@ -191,10 +196,10 @@ const LandingPage = () => {
                     <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">LangChain</span>
                   </div>
 
-                  {/* Vector DB */}
+                  {/* PostgreSQL */}
                   <div className="glass-3d flex flex-col items-center justify-center w-[58px] xs:w-[68px] sm:w-[82px] h-[56px] xs:h-[66px] sm:h-[78px] rounded-xl hover:border-cyan-400/50 transition-all duration-300 group">
-                    <img src={vectordbLogo} alt="Vector DB" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
-                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">Vector DB</span>
+                    <img src={postgresLogo} alt="PostgreSQL" className="relative z-10 w-4 xs:w-5 sm:w-6 h-4 xs:h-5 sm:h-6 mb-0.5 sm:mb-1 object-contain" />
+                    <span className="relative z-10 text-[8.5px] xs:text-[9.5px] sm:text-[11px] text-gray-200 font-medium tracking-tight">PostgreSQL</span>
                   </div>
                 </div>
 
@@ -218,7 +223,7 @@ const LandingPage = () => {
         </div>
 
         {/* Featured Projects Section (Horizontal Slider in Clean Dark 3D Glass Theme) */}
-        <div id="projects" className="mt-8 sm:mt-14 md:mt-20 mb-12 sm:mb-16">
+        <div id="projects" className="mt-8 sm:mt-14 md:mt-20 mb-12 sm:mb-16 content-auto">
           {/* Header row with Title and Single GET IN TOUCH Button */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-10 px-2 sm:px-4 max-w-7xl mx-auto">
             <div>
@@ -419,7 +424,7 @@ const LandingPage = () => {
         </div>
 
         {/* Tech Stack & Tools Section */}
-        <div className="mt-12 sm:mt-16 md:mt-24 mb-12 sm:mb-16">
+        <div className="mt-12 sm:mt-16 md:mt-24 mb-12 sm:mb-16 content-auto">
           <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 text-center px-4">
             Tech Stack & Tools
           </h2>
@@ -492,7 +497,7 @@ const LandingPage = () => {
         </div>
 
         {/* Work Experience Section - Interactive Split 1-Section (Matching Inspo Reference) */}
-        <div className="mt-14 sm:mt-20 md:mt-28 mb-16 sm:mb-20">
+        <div className="mt-14 sm:mt-20 md:mt-28 mb-16 sm:mb-20 content-auto">
           <div className="max-w-7xl mx-auto px-4 mb-8 sm:mb-10 text-center">
             <h2 className="text-white text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
               Work Experience
@@ -660,7 +665,7 @@ const LandingPage = () => {
       {/* Scroll-Linked Curtain Fill Section */}
       <section 
         ref={buildSectionRef} 
-        className="relative w-full overflow-hidden bg-[#07080c] py-14 sm:py-24 md:py-32 min-h-[500px] sm:min-h-[560px]"
+        className="relative w-full overflow-hidden bg-[#07080c] py-14 sm:py-24 md:py-32 min-h-[500px] sm:min-h-[560px] content-auto"
       >
         {/* ======================================================== */}
         {/* LAYER 1 (Base): Dark Theme Content                      */}
@@ -744,10 +749,10 @@ const LandingPage = () => {
         {/* Visibly sweeps up from 0% to 100% as you scroll down     */}
         {/* ======================================================== */}
         <div 
-          className="absolute inset-0 bg-[#f4f5f8] z-10 flex flex-col justify-center overflow-hidden py-14 sm:py-24 md:py-32 pointer-events-auto"
+          ref={curtainLayerRef}
+          className="absolute inset-0 bg-[#f4f5f8] z-10 flex flex-col justify-center overflow-hidden py-14 sm:py-24 md:py-32 pointer-events-auto will-change-[clip-path]"
           style={{
-            clipPath: `inset(${(1 - curtainProgress) * 100}% 0 0 0)`,
-            willChange: 'clip-path',
+            clipPath: 'inset(100% 0 0 0)',
           }}
         >
           {/* Subtle Architectural Dot Grid Pattern on Light Canvas */}
@@ -840,10 +845,11 @@ const LandingPage = () => {
 
         {/* Luminous Leading Edge Beam on the Rising Curtain */}
         <div 
-          className="absolute inset-x-0 z-20 pointer-events-none transition-opacity duration-200"
+          ref={curtainBeamRef}
+          className="absolute inset-x-0 z-20 pointer-events-none transition-opacity duration-150 will-change-[top,opacity]"
           style={{
-            top: `${(1 - curtainProgress) * 100}%`,
-            opacity: curtainProgress > 0.02 && curtainProgress < 0.98 ? 1 : 0,
+            top: '100%',
+            opacity: 0,
             transform: 'translateY(-50%)',
           }}
         >

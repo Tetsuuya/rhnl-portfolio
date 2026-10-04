@@ -59,8 +59,8 @@ function App() {
       {/* Sleek Minimal Ambient Glow Background */}
       <AmbientBackground />
 
-      {/* Snake Cinematic Intro Engine (Runs intro on desktop, then shuts down for 0% CPU) */}
-      <ElasticBackground currentView={currentView} showGrid={false} enableSnake={true} />
+      {/* Background Engine (Snake disabled, code preserved) */}
+      <ElasticBackground currentView={currentView} showGrid={false} enableSnake={false} />
 
       {/* Page Content Wrapper (Direct DOM clip-path reveal during snake intro) */}
       <div

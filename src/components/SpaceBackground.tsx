@@ -13,7 +13,7 @@ interface Star {
 
 export const SpaceBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scrollPos = useRef(window.scrollY);
+  const scrollPos = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
   const mouse = useRef({ x: 0, y: 0, active: false, targetX: 0, targetY: 0 });
   const speedMultiplier = useRef(1.0);
   const targetSpeedMultiplier = useRef(1.0);
