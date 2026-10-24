@@ -16,6 +16,17 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Email format validation (must be a valid email like name@gmail.com)
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setSubmitStatus({
+        type: 'error',
+        message: 'Please enter a valid email address (e.g. name@gmail.com).',
+      });
+      return;
+    }
+
     setLoading(true);
     setSubmitStatus({ type: null, message: '' });
 
@@ -66,15 +77,14 @@ const Contact = () => {
               <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-6">
                 Send a Message
               </h3>
-              
+
               {/* Status Message */}
               {submitStatus.type && (
                 <div
-                  className={`relative z-10 mb-5 p-4 rounded-xl ${
-                    submitStatus.type === 'success'
+                  className={`relative z-10 mb-5 p-4 rounded-xl ${submitStatus.type === 'success'
                       ? 'glass-3d border border-green-500/60 text-green-300'
                       : 'glass-3d border border-red-500/60 text-red-300'
-                  }`}
+                    }`}
                 >
                   {submitStatus.message}
                 </div>
@@ -100,6 +110,7 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="you@example.com"
                     required
+                    spellCheck={false}
                     className="glass-3d-input w-full px-4 py-3 rounded-xl text-white text-sm sm:text-base placeholder-gray-400 focus:outline-none"
                   />
                 </div>
@@ -143,7 +154,7 @@ const Contact = () => {
                       <>
                         Send Message
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                         </svg>
                       </>
                     )}
@@ -171,8 +182,8 @@ const Contact = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm sm:text-base font-semibold mb-1">Email:</p>
                     <p className="text-gray-300 text-xs sm:text-sm mb-1 break-all">sajol.rhenel123@gmail.com</p>
-                    <a 
-                      href="mailto:sajol.rhenel123@gmail.com" 
+                    <a
+                      href="mailto:sajol.rhenel123@gmail.com"
                       className="text-pink-300 hover:text-pink-400 text-xs sm:text-sm transition-colors"
                     >
                       Send an email
@@ -190,8 +201,8 @@ const Contact = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm sm:text-base font-semibold mb-1">Phone:</p>
                     <p className="text-gray-300 text-xs sm:text-sm mb-1">09536145105</p>
-                    <a 
-                      href="tel:09536145105" 
+                    <a
+                      href="tel:09536145105"
                       className="text-pink-300 hover:text-pink-400 text-xs sm:text-sm transition-colors"
                     >
                       Give me a call
