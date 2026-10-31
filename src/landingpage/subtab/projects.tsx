@@ -59,8 +59,8 @@ const Projects = () => {
           <div className="flex items-center justify-center mt-12">
             <div className="flex flex-col items-center gap-4">
               <div className="relative w-16 h-16">
-                <div className="absolute top-0 left-0 w-full h-full border-4 border-pink-300/20 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-pink-300 rounded-full animate-spin"></div>
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-cyan-/20 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-cyan- rounded-full animate-spin"></div>
               </div>
               <p className="text-white text-lg">Loading projects...</p>
             </div>
@@ -145,7 +145,7 @@ const Projects = () => {
 
               {/* Description */}
               <div className="space-y-2 pt-2">
-                <h4 className="text-pink-300 text-sm font-bold uppercase tracking-wider">Project Description</h4>
+                <h4 className="text-cyan- text-sm font-bold uppercase tracking-wider">Project Description</h4>
                 <p className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap">
                   {selectedProject.description}
                 </p>
@@ -170,7 +170,7 @@ const Projects = () => {
                   href={selectedProject.html_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl border-2 border-pink-400/60 text-pink-300 bg-pink-950/20 hover:bg-pink-500/20 hover:border-pink-400 hover:text-pink-100 transition-all duration-200 hover:shadow-[0_0_15px_rgba(236,72,153,0.5)] cursor-pointer"
+                  className="flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl border-2 border-cyan-/60 text-cyan- bg-cyan-/20 hover:bg-cyan-/20 hover:border-cyan- hover:text-cyan- transition-all duration-200  cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -200,7 +200,7 @@ const Projects = () => {
               onClick={() => setSelectedProject(repo)}
             >
               <div
-                className="glass-3d flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:border-pink-300/60 cursor-pointer"
+                className="glass-3d flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-300 hover:border-white/30 cursor-pointer"
               >
                 {repo.image && (
                   <div className="relative z-10 h-40 sm:h-36 md:h-40 overflow-hidden bg-black/60 border-b border-white/10">
@@ -216,7 +216,7 @@ const Projects = () => {
                   </div>
                 )}
                 <div className="p-4 sm:p-5 md:p-6 flex-1 flex flex-col relative z-10">
-                  <h3 className="text-white text-lg sm:text-xl font-bold mb-2 hover:text-pink-300 transition-colors">
+                  <h3 className="text-white text-lg sm:text-xl font-bold mb-2 hover:text-cyan- transition-colors">
                     {repo.name}
                   </h3>
                   {repo.description && (
@@ -265,7 +265,7 @@ const Projects = () => {
                       href={repo.html_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="glass-3d-pill flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-pink-300 border border-pink-500/30 hover:border-pink-400 hover:text-pink-200 transition-all duration-200 ml-auto"
+                      className="glass-3d-pill flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-cyan- border border-cyan-/30 hover:border-cyan- hover:text-cyan- transition-all duration-200 ml-auto"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

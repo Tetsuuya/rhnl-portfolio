@@ -15,7 +15,7 @@ const ExperienceSubtab = () => {
 
         {loading ? (
           <div className="flex flex-col items-center py-20 gap-4">
-            <div className="w-10 h-10 border-4 border-transparent border-t-pink-400 border-pink-400/20 rounded-full animate-spin"></div>
+            <div className="w-10 h-10 border-4 border-transparent border-t-cyan- border-cyan-/20 rounded-full animate-spin"></div>
             <p className="text-gray-400 text-sm">Loading experience items...</p>
           </div>
         ) : experienceItems.length === 0 ? (
@@ -34,14 +34,14 @@ const ExperienceSubtab = () => {
                 return (
                   <div key={exp.id} className={`relative flex flex-col sm:flex-row items-start sm:items-center ${isEven ? 'sm:flex-row-reverse' : ''}`}>
                     {/* Timeline circle node */}
-                    <div className="absolute left-4 sm:left-1/2 w-4 h-4 rounded-full border-2 border-pink-400 bg-neutral-900 -translate-x-1/2 z-10 transition-all duration-300 hover:scale-150 hover:shadow-[0_0_10px_rgba(236,72,153,1)] hidden sm:block"></div>
-                    <div className="absolute left-8 w-4 h-4 rounded-full border-2 border-pink-400 bg-neutral-900 -translate-x-1/2 z-10 sm:hidden"></div>
+                    <div className="absolute left-4 sm:left-1/2 w-4 h-4 rounded-full border-2 border-cyan- bg-neutral-900 -translate-x-1/2 z-10 transition-all duration-300 hover:scale-150 hover:shadow-[0_0_10px_rgba(103,232,249,0.8)] hidden sm:block"></div>
+                    <div className="absolute left-8 w-4 h-4 rounded-full border-2 border-cyan- bg-neutral-900 -translate-x-1/2 z-10 sm:hidden"></div>
 
                     {/* Card Content wrapper */}
                     <div className="w-full sm:w-[calc(50%-2rem)] ml-12 sm:ml-0">
-                      <div className="glass-3d rounded-2xl p-6 sm:p-7 hover:border-pink-300/60 transition-all duration-300">
+                      <div className="glass-3d rounded-2xl p-6 sm:p-7 hover:border-white/30 transition-all duration-300">
                         <div className="relative z-10 flex flex-wrap items-center gap-2 mb-3">
-                          <span className="glass-3d-pill inline-block px-3 py-1 border border-pink-700/40 text-[11px] font-bold text-pink-300 rounded-full">
+                          <span className="glass-3d-pill inline-block px-3 py-1 border border-cyan-/40 text-[11px] font-bold text-cyan- rounded-full">
                             {exp.duration}
                           </span>
                           {exp.location && (

@@ -139,7 +139,7 @@ const Contact = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="glass-3d w-full bg-pink-600/80 hover:bg-pink-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm sm:text-base font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-[0_10px_35px_rgba(236,72,153,0.5)] hover:border-pink-300 flex items-center justify-center gap-2"
+                  className="w-full bg-white hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 text-sm sm:text-base font-semibold py-3 px-6 rounded-xl transition-colors duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {loading ? (
@@ -167,7 +167,7 @@ const Contact = () => {
           {/* Right Column */}
           <div className="space-y-6 sm:space-y-7 md:space-y-8">
             {/* Contact Information */}
-            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-pink-300/60 transition-all duration-300">
+            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-white/30 transition-all duration-300">
               <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-6">
                 Contact Information
               </h3>
@@ -175,7 +175,7 @@ const Contact = () => {
                 {/* Email */}
                 <div className="flex items-start gap-3 sm:gap-4">
                   <div className="glass-3d-disc w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-pink-300 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-cyan- relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -184,7 +184,7 @@ const Contact = () => {
                     <p className="text-gray-300 text-xs sm:text-sm mb-1 break-all">sajol.rhenel123@gmail.com</p>
                     <a
                       href="mailto:sajol.rhenel123@gmail.com"
-                      className="text-pink-300 hover:text-pink-400 text-xs sm:text-sm transition-colors"
+                      className="text-cyan- hover:text-cyan- text-xs sm:text-sm transition-colors"
                     >
                       Send an email
                     </a>
@@ -194,7 +194,7 @@ const Contact = () => {
                 {/* Phone */}
                 <div className="flex items-start gap-3 sm:gap-4">
                   <div className="glass-3d-disc w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-pink-300 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-cyan- relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
@@ -203,7 +203,7 @@ const Contact = () => {
                     <p className="text-gray-300 text-xs sm:text-sm mb-1">09536145105</p>
                     <a
                       href="tel:09536145105"
-                      className="text-pink-300 hover:text-pink-400 text-xs sm:text-sm transition-colors"
+                      className="text-cyan- hover:text-cyan- text-xs sm:text-sm transition-colors"
                     >
                       Give me a call
                     </a>
@@ -213,7 +213,7 @@ const Contact = () => {
                 {/* Location */}
                 <div className="flex items-start gap-3 sm:gap-4">
                   <div className="glass-3d-disc w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-pink-300 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-cyan- relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -228,7 +228,7 @@ const Contact = () => {
             </div>
 
             {/* Available For */}
-            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-pink-300/60 transition-all duration-300">
+            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-white/30 transition-all duration-300">
               <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-4">
                 Available For
               </h3>

@@ -97,7 +97,7 @@ const About = () => {
           {/* Right Side - Biography and Skills Cards */}
           <div className="w-full lg:w-2/3 flex-1 space-y-6 sm:space-y-7 md:space-y-8">
             {/* Biography Card */}
-            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-pink-300/60 transition-all duration-300">
+            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-white/30 transition-all duration-300">
               <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-4">
                 Biography
               </h3>
@@ -107,7 +107,7 @@ const About = () => {
             </div>
 
             {/* Skills Card */}
-            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-pink-300/60 transition-all duration-300">
+            <div className="glass-3d rounded-2xl p-6 sm:p-8 hover:border-white/30 transition-all duration-300">
               <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-6">
                 Skills
               </h3>
@@ -122,7 +122,7 @@ const About = () => {
                         {items.map((skill, index) => (
                           <span
                             key={index}
-                            className="glass-3d-pill inline-block px-3 py-1 rounded-lg text-white text-xs sm:text-sm hover:border-pink-300/60 transition-all duration-300"
+                            className="glass-3d-pill inline-block px-3 py-1 rounded-lg text-white text-xs sm:text-sm hover:border-white/30 transition-all duration-300"
                           >
                             {skill}
                           </span>
