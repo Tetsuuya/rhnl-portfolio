@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import type { TechItem } from '../data/techStack';
 import { useTechStack } from '../hooks/useTechStack';
+import { sanitizeSvg } from '../utils/sanitizeSvg';
 
 interface PhysicsBody {
   id: number;
@@ -323,7 +324,7 @@ export const TechSandbox = () => {
               {body.item.icon.trim().toLowerCase().startsWith('<svg') ? (
                 <div 
                   className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain" 
-                  dangerouslySetInnerHTML={{ __html: body.item.icon }} 
+                  dangerouslySetInnerHTML={{ __html: sanitizeSvg(body.item.icon) }} 
                 />
               ) : (
                 <img 

@@ -1,61 +1,121 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { emailService } from '../../services/emailService';
+import {
+  CONTACT_LIMITS,
+  validateContact,
+  validateContactField,
+  type ContactErrors,
+  type ContactFields,
+} from '../../utils/contactValidation';
+import { SITE } from '../../config/site';
+
+type FieldName = keyof ContactFields;
+
+const EMPTY_FORM: ContactFields = { name: '', email: '', subject: '', message: '' };
+
+// Real people take a few seconds to fill the form; instant submissions are bots
+const MIN_FILL_TIME_MS = 3000;
+
+const FIELD_ORDER: FieldName[] = ['name', 'email', 'subject', 'message'];
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
+  const [formData, setFormData] = useState<ContactFields>(EMPTY_FORM);
+  const [errors, setErrors] = useState<ContactErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
+  const [honeypot, setHoneypot] = useState('');
   const [loading, setLoading] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: 'success' | 'error' | null;
-    message: string;
-  }>({ type: null, message: '' });
+  const [sent, setSent] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const startedAt = useRef(Date.now());
+  const fieldRefs = useRef<Partial<Record<FieldName, HTMLInputElement | HTMLTextAreaElement | null>>>({});
+
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, [sent]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const field = e.target.name as FieldName;
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setSubmitError('');
+    // Once a field has been visited, re-check it live so errors clear as soon as they're fixed
+    if (touched[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validateContactField(field, value) }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const field = e.target.name as FieldName;
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, [field]: validateContactField(field, e.target.value) }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
 
-    // Email format validation (must be a valid email like name@gmail.com)
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      setSubmitStatus({
-        type: 'error',
-        message: 'Please enter a valid email address (e.g. name@gmail.com).',
-      });
+    const nextErrors = validateContact(formData);
+    setErrors(nextErrors);
+    setTouched({ name: true, email: true, subject: true, message: true });
+
+    const firstInvalid = FIELD_ORDER.find((field) => nextErrors[field]);
+    if (firstInvalid) {
+      fieldRefs.current[firstInvalid]?.focus();
+      return;
+    }
+
+    // Bot checks: hidden field filled in, or form submitted impossibly fast. Pretend it worked.
+    if (honeypot || Date.now() - startedAt.current < MIN_FILL_TIME_MS) {
+      setSent(true);
       return;
     }
 
     setLoading(true);
-    setSubmitStatus({ type: null, message: '' });
-
+    setSubmitError('');
     try {
       await emailService.sendEmail(formData);
-      setSubmitStatus({
-        type: 'success',
-        message: 'Message sent successfully! I\'ll get back to you soon.',
-      });
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setSent(true);
+      setFormData(EMPTY_FORM);
+      setTouched({});
+      setErrors({});
     } catch (error) {
-      setSubmitStatus({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to send message. Please try again later.',
-      });
+      setSubmitError(
+        error instanceof Error ? error.message : 'Failed to send message. Please try again later.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const fieldClass = (field: FieldName) =>
+    `glass-3d-input w-full px-4 py-3 rounded-xl text-white text-base placeholder-gray-500 focus:outline-none ${
+      errors[field] ? '!border-red-400/70' : ''
+    }`;
+
+  const renderError = (field: FieldName) =>
+    errors[field] ? (
+      <p id={`${field}-error`} className="mt-1.5 text-xs sm:text-sm text-red-300 flex items-center gap-1.5">
+        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        {errors[field]}
+      </p>
+    ) : null;
+
+  const fieldA11y = (field: FieldName) => ({
+    id: `contact-${field}`,
+    name: field,
+    value: formData[field],
+    onChange: handleChange,
+    onBlur: handleBlur,
+    'aria-invalid': Boolean(errors[field]),
+    'aria-describedby': errors[field] ? `${field}-error` : undefined,
+    ref: (el: HTMLInputElement | HTMLTextAreaElement | null) => {
+      fieldRefs.current[field] = el;
+    },
+  });
+
+  const messageLength = formData.message.trim().length;
 
   return (
     <div className="min-h-[calc(100vh-120px)] w-full py-8 sm:py-12 md:py-16">
@@ -74,93 +134,155 @@ const Contact = () => {
           {/* Left Column - Send a Message Form */}
           <div className="lg:col-span-2">
             <div className="glass-3d rounded-2xl p-6 sm:p-8 h-full">
-              <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-6">
-                Send a Message
-              </h3>
-
-              {/* Status Message */}
-              {submitStatus.type && (
-                <div
-                  className={`relative z-10 mb-5 p-4 rounded-xl ${submitStatus.type === 'success'
-                      ? 'glass-3d border border-green-500/60 text-green-300'
-                      : 'glass-3d border border-red-500/60 text-red-300'
-                    }`}
-                >
-                  {submitStatus.message}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="relative z-10 space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="John Doe"
-                    required
-                    className="glass-3d-input w-full px-4 py-3 rounded-xl text-white text-sm sm:text-base placeholder-gray-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="you@example.com"
-                    required
-                    spellCheck={false}
-                    className="glass-3d-input w-full px-4 py-3 rounded-xl text-white text-sm sm:text-base placeholder-gray-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="What's this about?"
-                    required
-                    className="glass-3d-input w-full px-4 py-3 rounded-xl text-white text-sm sm:text-base placeholder-gray-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Your message here..."
-                    required
-                    rows={6}
-                    className="glass-3d-input w-full px-4 py-3 rounded-xl text-white text-sm sm:text-base placeholder-gray-400 focus:outline-none resize-y"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-white hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 text-sm sm:text-base font-semibold py-3 px-6 rounded-xl transition-colors duration-200 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        Send Message
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                        </svg>
-                      </>
-                    )}
+              {sent ? (
+                <div className="relative z-10 h-full flex flex-col items-center justify-center text-center py-10" role="status">
+                  <span className="w-14 h-14 rounded-full bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center mb-5">
+                    <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
                   </span>
-                </button>
-              </form>
+                  <h3 className="text-white text-2xl font-bold">Message sent!</h3>
+                  <p className="text-gray-400 mt-2 max-w-sm">
+                    Thanks for reaching out. I usually reply within 1–2 days.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSent(false)}
+                    className="mt-6 px-5 py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    Send another message
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="relative z-10 text-white text-xl sm:text-2xl font-bold mb-6">
+                    Send a Message
+                  </h3>
+
+                  {submitError && (
+                    <div role="alert" className="relative z-10 mb-5 p-4 rounded-xl border border-red-500/40 bg-red-500/10 text-red-200 text-sm">
+                      {submitError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} noValidate className="relative z-10 space-y-4">
+                    {/* Honeypot: hidden from people and screen readers, bots tend to fill it */}
+                    <div className="absolute -left-[9999px] w-px h-px overflow-hidden" aria-hidden="true">
+                      <label htmlFor="contact-website">Website</label>
+                      <input
+                        id="contact-website"
+                        type="text"
+                        name="website"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="contact-name" className="block text-sm font-medium text-gray-300 mb-1.5">
+                          Name
+                        </label>
+                        <input
+                          {...fieldA11y('name')}
+                          type="text"
+                          autoComplete="name"
+                          maxLength={CONTACT_LIMITS.name.max}
+                          placeholder="Your name"
+                          className={fieldClass('name')}
+                        />
+                        {renderError('name')}
+                      </div>
+                      <div>
+                        <label htmlFor="contact-email" className="block text-sm font-medium text-gray-300 mb-1.5">
+                          Email
+                        </label>
+                        <input
+                          {...fieldA11y('email')}
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          spellCheck={false}
+                          maxLength={CONTACT_LIMITS.email.max}
+                          placeholder="you@company.com"
+                          className={fieldClass('email')}
+                        />
+                        {renderError('email')}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-300 mb-1.5">
+                        Subject
+                      </label>
+                      <input
+                        {...fieldA11y('subject')}
+                        type="text"
+                        maxLength={CONTACT_LIMITS.subject.max}
+                        placeholder="Job opportunity, project inquiry…"
+                        className={fieldClass('subject')}
+                      />
+                      {renderError('subject')}
+                    </div>
+
+                    <div>
+                      <div className="flex items-baseline justify-between mb-1.5">
+                        <label htmlFor="contact-message" className="block text-sm font-medium text-gray-300">
+                          Message
+                        </label>
+                        <span
+                          className={`text-xs tabular-nums ${
+                            messageLength > CONTACT_LIMITS.message.max * 0.9 ? 'text-amber-300' : 'text-gray-500'
+                          }`}
+                          aria-live="polite"
+                        >
+                          {messageLength} / {CONTACT_LIMITS.message.max}
+                        </span>
+                      </div>
+                      <textarea
+                        {...fieldA11y('message')}
+                        rows={6}
+                        maxLength={CONTACT_LIMITS.message.max}
+                        placeholder="Tell me a bit about the role or project…"
+                        className={`${fieldClass('message')} resize-y`}
+                      />
+                      {renderError('message')}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      aria-busy={loading}
+                      className="w-full bg-white hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 text-sm sm:text-base font-semibold py-3 px-6 rounded-xl transition-colors duration-200 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Prefer email? Write to{' '}
+                      <a href={`mailto:${SITE.email}`} className="text-gray-300 hover:text-white underline underline-offset-2">
+                        {SITE.email}
+                      </a>
+                    </p>
+                  </form>
+                </>
+              )}
             </div>
           </div>
 

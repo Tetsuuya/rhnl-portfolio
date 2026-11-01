@@ -1,136 +1,135 @@
 import { projectService } from './projectService';
 import { experienceService } from './experienceService';
 import { techStackService } from './techStackService';
+import type { Project } from '../data/projects';
+import type { Experience } from '../data/experience';
+import type { TechItem } from '../data/techStack';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+const EMAIL = 'sajol.rhenel123@gmail.com';
+const GITHUB = 'https://github.com/Tetsuuya';
+const LINKEDIN = 'https://www.linkedin.com/in/rhenel-jhon-sajol-360275324/';
 
-const getEnvVar = (key: string): string => {
-  const value = import.meta.env[key];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-  return value;
+const CATEGORY_LABELS: Record<string, string> = {
+  Language: 'Languages',
+  Framework: 'Frameworks',
+  Database: 'Databases',
+  'DevOps & Cloud Platforms': 'DevOps & Cloud',
+  Tool: 'Tools',
+  Design: 'Design',
 };
 
-// Only the most recent turns are sent, to keep requests small and fast
-const MAX_HISTORY = 10;
+interface PortfolioData {
+  projects: Project[];
+  experience: Experience[];
+  techStack: TechItem[];
+}
 
-const PROFILE = `Name: Rhenel Jhon Sajol
-Role: Full-Stack Developer
-Education: Computer Science student, University of Science and Technology of Southern Philippines (USTP)
-Location: Cagayan de Oro, Philippines (open to remote work)
-Availability: Open to full-time roles and freelance work
-Email: sajol.rhenel123@gmail.com
-GitHub: https://github.com/Tetsuuya
-LinkedIn: https://www.linkedin.com/in/rhenel-jhon-sajol-360275324/
-Contact form: the "Contacts" page of this website`;
+let portfolioDataPromise: Promise<PortfolioData> | null = null;
 
-let portfolioContextPromise: Promise<string> | null = null;
-
-// Builds a plain-text snapshot of the portfolio data so answers are grounded in real facts
-const loadPortfolioContext = (): Promise<string> => {
-  if (!portfolioContextPromise) {
-    portfolioContextPromise = Promise.all([
+// Loaded once and reused, so answers always reflect the latest portfolio data
+const loadPortfolioData = (): Promise<PortfolioData> => {
+  if (!portfolioDataPromise) {
+    portfolioDataPromise = Promise.all([
       projectService.fetchProjects().catch(() => []),
       experienceService.fetchExperience().catch(() => []),
       techStackService.fetchTechStack().catch(() => []),
-    ]).then(([projects, experience, techStack]) => {
-      const projectLines = projects.map((p) =>
-        [
-          `- ${p.name}${p.featured ? ' (featured)' : ''}: ${p.description}`,
-          p.techStack?.length ? `  Tech: ${p.techStack.join(', ')}` : '',
-          p.html_url ? `  Live demo: ${p.html_url}` : '',
-          p.repo_url ? `  Code: ${p.repo_url}` : '',
-        ].filter(Boolean).join('\n')
-      );
-
-      const experienceLines = experience.map((e) =>
-        [
-          `- ${e.role} at ${e.company} (${e.duration})${e.location ? `, ${e.location}` : ''}`,
-          `  ${e.description}`,
-          ...(e.key_achievements ?? []).map((a) => `  * ${a}`),
-          e.tech_stack?.length ? `  Tech: ${e.tech_stack.join(', ')}` : '',
-        ].filter(Boolean).join('\n')
-      );
-
-      const techByCategory = techStack.reduce<Record<string, string[]>>((acc, t) => {
-        (acc[t.category] ??= []).push(t.name);
-        return acc;
-      }, {});
-      const techLines = Object.entries(techByCategory).map(
-        ([category, names]) => `- ${category}: ${names.join(', ')}`
-      );
-
-      return [
-        `PROFILE\n${PROFILE}`,
-        `PROJECTS\n${projectLines.join('\n')}`,
-        `EXPERIENCE\n${experienceLines.join('\n')}`,
-        `TECH STACK\n${techLines.join('\n')}`,
-      ].join('\n\n');
-    });
+    ]).then(([projects, experience, techStack]) => ({ projects, experience, techStack }));
   }
-  return portfolioContextPromise;
+  return portfolioDataPromise;
 };
+
+const contactLine = `You can reach Rhenel at ${EMAIL} or through the **Contacts** page.`;
+
+const describeProject = (p: Project) =>
+  [
+    `**${p.name}**: ${p.description}`,
+    p.techStack?.length ? `- Built with: ${p.techStack.join(', ')}` : '',
+    p.html_url ? `- Live demo: ${p.html_url}` : '',
+    p.repo_url ? `- Code: ${p.repo_url}` : '',
+  ].filter(Boolean).join('\n');
+
+const answers = {
+  greeting: () =>
+    "Hi! 👋 I can tell you about Rhenel's **projects**, **tech stack**, **experience**, **availability**, or how to **get in touch**. What would you like to know?",
+
+  thanks: () => `You're welcome! ${contactLine}`,
+
+  availability: () =>
+    `Yes! Rhenel is **open to full-time roles and freelance work**, and is based in Cagayan de Oro, Philippines (remote-friendly).\n\n${contactLine}`,
+
+  contact: () =>
+    `Here's how to reach Rhenel:\n- Email: ${EMAIL}\n- LinkedIn: ${LINKEDIN}\n- GitHub: ${GITHUB}\n\nOr send a message through the **Contacts** page.`,
+
+  education: () =>
+    'Rhenel is a **Computer Science student** at the University of Science and Technology of Southern Philippines (USTP) in Cagayan de Oro.',
+
+  location: () =>
+    'Rhenel is based in **Cagayan de Oro, Philippines** and is open to remote work.',
+
+  resume: () => `For a résumé, email Rhenel at ${EMAIL} and one will be sent your way.`,
+
+  projects: ({ projects }: PortfolioData) => {
+    const featured = projects.filter((p) => p.featured);
+    const list = (featured.length ? featured : projects).slice(0, 5);
+    if (!list.length) return `Projects are loading right now. You can browse them on the **Projects** page.`;
+    return `Here are some of Rhenel's featured projects:\n${list
+      .map((p) => `- **${p.name}**: ${p.html_url}`)
+      .join('\n')}\n\nAsk about any of them by name for details, or see everything on the **Projects** page.`;
+  },
+
+  experience: ({ experience }: PortfolioData) => {
+    if (!experience.length) return 'You can see Rhenel’s work history on the **Experience** page.';
+    return `Rhenel's experience:\n${experience
+      .map((e) => `- **${e.role}** at ${e.company} (${e.duration})`)
+      .join('\n')}\n\nThe full details are on the **Experience** page.`;
+  },
+
+  stack: ({ techStack }: PortfolioData) => {
+    if (!techStack.length) return 'Rhenel works with React, Next.js, TypeScript, Django, FastAPI and Supabase.';
+    const byCategory = techStack.reduce<Record<string, string[]>>((acc, t) => {
+      (acc[t.category] ??= []).push(t.name);
+      return acc;
+    }, {});
+    return `Rhenel's tech stack:\n${Object.entries(byCategory)
+      .map(([cat, names]) => `- **${CATEGORY_LABELS[cat] ?? cat}**: ${names.join(', ')}`)
+      .join('\n')}`;
+  },
+
+  fallback: () =>
+    `I'm not sure about that one. I can answer questions about Rhenel's **projects**, **tech stack**, **experience**, **education**, or **availability**.\n\nFor anything else: ${EMAIL}`,
+};
+
+const matches = (text: string, words: string[]) => words.some((w) => new RegExp(`\\b${w}`, 'i').test(text));
 
 export const chatbotService = {
   /**
-   * Sends a message to Groq API and gets a response grounded in the portfolio data
+   * Returns a preset answer for the visitor's question, filled in with live portfolio data
    */
-  async sendMessage(
-    message: string,
-    conversationHistory: ChatMessage[] = []
-  ): Promise<string> {
-    const groqApiKey = getEnvVar('VITE_GROQ_API_KEY');
-    const portfolioContext = await loadPortfolioContext();
+  async sendMessage(message: string): Promise<string> {
+    const text = message.toLowerCase();
+    const data = await loadPortfolioData();
 
-    const messages = [
-      {
-        role: 'system',
-        content: `You are the assistant on Rhenel Jhon Sajol's portfolio website. Visitors are often recruiters and hiring managers.
-
-Rules:
-- Answer only using the PORTFOLIO DATA below. If something isn't covered, say you don't know and suggest contacting Rhenel directly at sajol.rhenel123@gmail.com.
-- Never invent projects, employers, dates, metrics or skills.
-- Be warm, confident and concise: 2-5 short sentences, or a short bullet list when listing things.
-- Refer to Rhenel by name.
-- When relevant, include live demo or code links, and end hiring-related answers by pointing to the email or the Contacts page.
-- Use simple Markdown only: **bold**, bullet lists starting with "- ", and plain URLs.
-
-PORTFOLIO DATA
-${portfolioContext}`,
-      },
-      ...conversationHistory.slice(-MAX_HISTORY),
-      {
-        role: 'user',
-        content: message,
-      },
-    ];
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', // Fast and efficient model
-        messages: messages,
-        temperature: 0.3,
-        max_tokens: 500,
-      }),
+    // A specific project mentioned by name gets its own detailed answer
+    const project = data.projects.find((p) => {
+      const name = p.name.toLowerCase().split(/[-:(]/)[0].trim();
+      return name.length > 2 && text.includes(name);
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error?.message || `Failed to get response: ${response.statusText}`
-      );
-    }
+    // Short pause so replies feel conversational rather than instant
+    await new Promise((resolve) => setTimeout(resolve, 450));
 
-    const data = await response.json();
-    return data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+    if (project) return describeProject(project);
+    if (/^(hi|hello|hey|yo|good (morning|afternoon|evening))\b/.test(text.trim())) return answers.greeting();
+    if (/\b(thanks?|thank you|ty)\b/.test(text)) return answers.thanks();
+    if (matches(text, ['open to', 'available', 'availability', 'hire', 'hiring', 'freelance', 'full-time', 'full time', 'job'])) return answers.availability();
+    if (matches(text, ['resume', 'résumé', 'cv'])) return answers.resume();
+    if (matches(text, ['contact', 'email', 'reach', 'linkedin', 'github', 'message', 'call'])) return answers.contact();
+    if (matches(text, ['experience', 'work history', 'worked', 'work at', 'work for', 'company', 'companies', 'role', 'intern', 'career'])) return answers.experience(data);
+    if (matches(text, ['stack', 'tech', 'skill', 'language', 'framework', 'tool', 'database', 'know'])) return answers.stack(data);
+    if (matches(text, ['project', 'portfolio', 'built', 'build', 'app', 'work', 'strongest', 'best'])) return answers.projects(data);
+    if (matches(text, ['school', 'study', 'studies', 'university', 'college', 'education', 'student', 'degree', 'ustp'])) return answers.education();
+    if (matches(text, ['where', 'location', 'based', 'remote', 'country', 'city'])) return answers.location();
+
+    return answers.fallback();
   },
 };

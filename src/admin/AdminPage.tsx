@@ -7,6 +7,7 @@ import { generateResumePDF } from '../services/resumeService';
 import type { Project } from '../data/projects';
 import type { TechItem, CategoryType as TechCategoryType } from '../data/techStack';
 import type { Experience } from '../data/experience';
+import { sanitizeSvg } from '../utils/sanitizeSvg';
 
 const AdminPage = () => {
   // Authentication states
@@ -985,7 +986,7 @@ const AdminPage = () => {
                           {tech.icon.trim().toLowerCase().startsWith('<svg') ? (
                             <div 
                               className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain flex items-center justify-center" 
-                              dangerouslySetInnerHTML={{ __html: tech.icon }} 
+                              dangerouslySetInnerHTML={{ __html: sanitizeSvg(tech.icon) }} 
                             />
                           ) : (
                             <img 
@@ -1548,7 +1549,7 @@ const AdminPage = () => {
                       {techIcon.trim().toLowerCase().startsWith('<svg') ? (
                         <div 
                           className="w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain flex items-center justify-center" 
-                          dangerouslySetInnerHTML={{ __html: techIcon }} 
+                          dangerouslySetInnerHTML={{ __html: sanitizeSvg(techIcon) }} 
                         />
                       ) : (
                         <img 

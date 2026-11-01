@@ -1,13 +1,23 @@
 import { supabase } from './supabaseClient';
 import type { Experience } from '../data/experience';
 import { fallbackExperienceData } from '../data/experience';
+import { createRequestCache } from '../utils/requestCache';
+
+const experienceCache = createRequestCache<Experience[]>();
 
 export const experienceService = {
   /**
    * Fetches all experience items from Supabase.
    * If there is an error, it falls back to the static fallbackExperienceData.
    */
-  async fetchExperience(): Promise<Experience[]> {
+  /**
+   * Cached read shared by every page; mutations below clear it so edits show up immediately.
+   */
+  fetchExperience(): Promise<Experience[]> {
+    return experienceCache.get(() => experienceService.fetchExperienceUncached());
+  },
+
+  async fetchExperienceUncached(): Promise<Experience[]> {
     try {
       const { data, error } = await supabase
         .from('experience')
@@ -34,6 +44,7 @@ export const experienceService = {
    * Inserts a new experience item into Supabase.
    */
   async addExperience(exp: Omit<Experience, 'id'>): Promise<Experience> {
+    experienceCache.clear();
     const { data, error } = await supabase
       .from('experience')
       .insert([exp])
@@ -54,6 +65,7 @@ export const experienceService = {
    * Updates an existing experience item in Supabase.
    */
   async updateExperience(id: number, exp: Omit<Experience, 'id'>): Promise<Experience> {
+    experienceCache.clear();
     const { data, error } = await supabase
       .from('experience')
       .update(exp)
@@ -75,6 +87,7 @@ export const experienceService = {
    * Deletes an experience item from Supabase.
    */
   async deleteExperience(id: number): Promise<void> {
+    experienceCache.clear();
     const { error } = await supabase
       .from('experience')
       .delete()
@@ -90,6 +103,7 @@ export const experienceService = {
    * Skips items that already exist in the DB (checked by company and role).
    */
   async seedDatabase(): Promise<Experience[]> {
+    experienceCache.clear();
     const current = await this.fetchExperience();
     const currentKeys = new Set(current.map((e) => `${e.company}-${e.role}`));
 

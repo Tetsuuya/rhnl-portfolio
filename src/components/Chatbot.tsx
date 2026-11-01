@@ -116,16 +116,12 @@ const Chatbot = () => {
     const userText = text.trim();
     if (!userText || isLoading) return;
 
-    const history = messages
-      .filter((m) => !m.isError)
-      .map((m) => ({ role: m.role, content: m.content }));
-
     setMessages((prev) => [...prev, { role: 'user', content: userText }]);
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await chatbotService.sendMessage(userText, history);
+      const response = await chatbotService.sendMessage(userText);
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       // Keep technical details in the console; visitors get a helpful fallback
@@ -172,7 +168,7 @@ const Chatbot = () => {
           <Avatar size="w-10 h-10" />
           <span className="hidden sm:flex flex-col items-start leading-tight">
             <span className="text-sm font-semibold">Ask about me</span>
-            <span className="text-[11px] text-gray-400 group-hover:text-gray-300">AI assistant</span>
+            <span className="text-[11px] text-gray-400 group-hover:text-gray-300">Quick answers</span>
           </span>
         </button>
       )}
@@ -190,7 +186,7 @@ const Chatbot = () => {
               <Avatar size="w-10 h-10" />
               <div className="min-w-0">
                 <h3 className="text-sm sm:text-base font-semibold text-white truncate">Ask about Rhenel</h3>
-                <p className="text-xs text-gray-400 truncate">AI assistant · answers from this portfolio</p>
+                <p className="text-xs text-gray-400 truncate">Quick answers about my work</p>
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
@@ -295,7 +291,7 @@ const Chatbot = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything about Rhenel…"
                 disabled={isLoading}
-                className="flex-1 resize-none bg-transparent py-2 text-sm text-white placeholder-gray-500 focus:outline-none disabled:opacity-50 no-scrollbar"
+                className="flex-1 resize-none bg-transparent py-2 text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none disabled:opacity-50 no-scrollbar"
               />
               <button
                 type="submit"
@@ -313,7 +309,7 @@ const Chatbot = () => {
               </button>
             </div>
             <p className="text-[11px] text-gray-500 text-center mt-2">
-              AI can make mistakes. For anything important, email{' '}
+              Need something specific? Email{' '}
               <a href="mailto:sajol.rhenel123@gmail.com" className="text-gray-400 hover:text-white underline underline-offset-2">
                 Rhenel directly
               </a>

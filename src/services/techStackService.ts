@@ -1,6 +1,9 @@
 import { supabase } from './supabaseClient';
 import type { TechItem } from '../data/techStack';
 import { techStackData } from '../data/techStack';
+import { createRequestCache } from '../utils/requestCache';
+
+const techStackCache = createRequestCache<TechItem[]>();
 
 // Helper to map DB snake_case to Frontend camelCase
 function mapFromDB(dbTech: any): TechItem {
@@ -30,7 +33,14 @@ export const techStackService = {
    * Fetches all tech items from Supabase.
    * If there is an error (e.g. table not set up), it falls back to the static local techStackData.
    */
-  async fetchTechStack(): Promise<TechItem[]> {
+  /**
+   * Cached read shared by every page; mutations below clear it so edits show up immediately.
+   */
+  fetchTechStack(): Promise<TechItem[]> {
+    return techStackCache.get(() => techStackService.fetchTechStackUncached());
+  },
+
+  async fetchTechStackUncached(): Promise<TechItem[]> {
     try {
       const { data, error } = await supabase
         .from('tech_stack')
@@ -57,6 +67,7 @@ export const techStackService = {
    * Inserts a new tech item into Supabase.
    */
   async addTechItem(tech: Omit<TechItem, 'id'>): Promise<TechItem> {
+    techStackCache.clear();
     const dbData = mapToDB(tech);
     const { data, error } = await supabase
       .from('tech_stack')
@@ -78,6 +89,7 @@ export const techStackService = {
    * Updates an existing tech item in Supabase.
    */
   async updateTechItem(id: number, tech: Omit<TechItem, 'id'>): Promise<TechItem> {
+    techStackCache.clear();
     const dbData = mapToDB(tech);
     const { data, error } = await supabase
       .from('tech_stack')
@@ -100,6 +112,7 @@ export const techStackService = {
    * Deletes a tech item from Supabase.
    */
   async deleteTechItem(id: number): Promise<void> {
+    techStackCache.clear();
     const { error } = await supabase
       .from('tech_stack')
       .delete()
@@ -115,6 +128,7 @@ export const techStackService = {
    * Skips items that already exist in the DB (checked by name).
    */
   async seedDatabase(): Promise<TechItem[]> {
+    techStackCache.clear();
     const current = await this.fetchTechStack();
     const currentNames = new Set(current.map((t) => t.name));
 

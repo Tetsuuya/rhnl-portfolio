@@ -1,6 +1,9 @@
 import { supabase } from './supabaseClient';
 import type { Project } from '../data/projects';
 import { projectsData } from '../data/projects';
+import { createRequestCache } from '../utils/requestCache';
+
+const projectsCache = createRequestCache<Project[]>();
 
 // Helper to map DB snake_case to Frontend camelCase
 function mapFromDB(dbProj: any): Project {
@@ -71,7 +74,14 @@ export const projectService = {
    * Fetches all projects from Supabase.
    * If there is an error (e.g. database not set up), it falls back to the static local projectsData.
    */
-  async fetchProjects(): Promise<Project[]> {
+  /**
+   * Cached read shared by every page; mutations below clear it so edits show up immediately.
+   */
+  fetchProjects(): Promise<Project[]> {
+    return projectsCache.get(() => projectService.fetchProjectsUncached());
+  },
+
+  async fetchProjectsUncached(): Promise<Project[]> {
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -99,6 +109,7 @@ export const projectService = {
    * Inserts a new project into Supabase.
    */
   async addProject(project: Omit<Project, 'id'>): Promise<Project> {
+    projectsCache.clear();
     const dbData = mapToDB(project);
     const { data, error } = await supabase
       .from('projects')
@@ -120,6 +131,7 @@ export const projectService = {
    * Updates an existing project in Supabase.
    */
   async updateProject(id: number, project: Omit<Project, 'id'>): Promise<Project> {
+    projectsCache.clear();
     const dbData = mapToDB(project);
     const { data, error } = await supabase
       .from('projects')
@@ -142,6 +154,7 @@ export const projectService = {
    * Deletes a project from Supabase.
    */
   async deleteProject(id: number): Promise<void> {
+    projectsCache.clear();
     const { error } = await supabase
       .from('projects')
       .delete()
@@ -157,6 +170,7 @@ export const projectService = {
    * Skips files that already exist in the DB (checked by name).
    */
   async seedDatabase(): Promise<Project[]> {
+    projectsCache.clear();
     const current = await this.fetchProjects();
     const currentNames = new Set(current.map((p) => p.name));
 

@@ -1,11 +1,8 @@
 import { supabase } from './supabaseClient';
+import { normalizeContact, validateContact, type ContactFields } from '../utils/contactValidation';
+import { SITE } from '../config/site';
 
-export interface EmailData {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-}
+export type EmailData = ContactFields;
 
 export const emailService = {
   /**
@@ -13,34 +10,27 @@ export const emailService = {
    * Completely avoids exposing secret email/SMTP API keys in client-side bundles.
    */
   async sendEmail(data: EmailData): Promise<void> {
-    const trimmedName = data.name.trim();
-    const trimmedEmail = data.email.trim();
-    const trimmedSubject = data.subject.trim();
-    const trimmedMessage = data.message.trim();
+    const clean = normalizeContact(data);
 
-    if (!trimmedName || !trimmedEmail || !trimmedSubject || !trimmedMessage) {
-      throw new Error('All fields are required.');
+    // Re-validate here so the service is safe even if called without the form
+    const errors = validateContact(clean);
+    const firstError = Object.values(errors)[0];
+    if (firstError) {
+      throw new Error(firstError);
     }
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      throw new Error('Please enter a valid email address (e.g. name@gmail.com).');
-    }
-
-    const { error } = await supabase.from('contact_messages').insert([
-      {
-        name: trimmedName,
-        email: trimmedEmail,
-        subject: trimmedSubject,
-        message: trimmedMessage,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    // created_at and read are set by the database (see supabase_security.sql)
+    const { error } = await supabase.from('contact_messages').insert([clean]);
 
     if (error) {
       console.error('Failed to submit message to Supabase:', error.message);
+      if (error.message.includes('rate_limited')) {
+        throw new Error(
+          `You've already sent a few messages recently. Please try again in an hour, or email ${SITE.email} directly.`
+        );
+      }
       throw new Error(
-        'Unable to send message at this time. Please try again or email directly at sajol.rhenel123@gmail.com'
+        `Unable to send message at this time. Please try again or email directly at ${SITE.email}`
       );
     }
   },
